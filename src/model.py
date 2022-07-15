@@ -234,7 +234,7 @@ class GAN(nn.Module):
 
         return running_loss
     
-    def train(self, dataloader: torch.utils.data.Dataloader, generator_strategy: dict, discriminator_strategy: dict, epochs: int, sample_interval: int) -> None:
+    def train(self, dataloader: torch.utils.data.Dataloader, generator_strategy: dict, discriminator_strategy: dict, epochs: int, sample_interval: int, sample_save_path: str, model_save_path: str) -> None:
         for epoch in range(epochs):
             print('-' * 50)
             print(f'Starting Epoch {epoch + 1}/{epochs}:')
@@ -247,13 +247,27 @@ class GAN(nn.Module):
 
             # Print the losses
             print(f'Epoch: {epoch + 1} - Generator loss: {generator_loss:.6f} - Discriminator loss: {discriminator_loss:.6f}')
-            print('-' * 50)
 
             if epoch % sample_interval == 0:
-                # Sample noise
-                z = Variable(torch.Tensor(np.random.normal(0, 1, (dataloader[0].shape[0], self.z_dim)))).to(self.device)
+                input_shape = dataloader[0]
+                self.save_batch(save_path=sample_save_path, input_shape=input_shape, epoch=epoch, loss=generator_loss, n_images=5)
+                print(f'Saved samples to {sample_save_path}.')
+            
+            self.save_model(save_path=model_save_path, epoch=epoch, loss=generator_loss, discriminator_loss=discriminator_loss)
+            print(f'Saved model to {model_save_path}.')
+            
+            print('-' * 50)
+    
+    def save_batch(self, save_path: str, epoch: int, input_shape: tuple, loss: int, n_images: int=5) -> None:
+        # Sample noise
+        z = Variable(torch.Tensor(np.random.normal(0, 1, (input_shape.shape[0], self.z_dim)))).to(self.device)
 
-                # Forward pass to get fake inputs
-                fake_input = self.generator(z)
-                save_image(fake_input.data[:25], "./samples/epoch_%d.png" % epoch, nrow=5, normalize=True)
+        # Forward pass to get fake inputs
+        fake_input = self.generator(z)
+        save_image(fake_input.data[:n_images**2], f"{save_path}/generated_samples_epoch_{epoch}_loss_{loss}.png", nrow=n_images, normalize=True)
+    
+    def save_model(self, save_path: str, epoch: int, generator_loss: int, discriminator_loss: int) -> None:
+        torch.save(self.generator.state_dict(), f"{save_path}/generator_epoch_{epoch}_loss_{generator_loss}.pth")
+        torch.save(self.discriminator.state_dict(), f"{save_path}/discriminator_epoch_{epoch}_loss_{discriminator_loss}.pth")
+                
 
