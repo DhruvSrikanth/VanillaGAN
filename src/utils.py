@@ -1,10 +1,7 @@
-import warnings
 import torch
 import numpy as np
 
-import typing
-
-def print_config(config: dict):
+def print_config(config: dict) -> None:
     """
     Print the configuration.
     Parameters:
@@ -17,7 +14,7 @@ def print_config(config: dict):
         i += 1
     print("\n")
 
-def print_strategy(strategy: dict):
+def print_strategy(strategy: dict) -> None:
     """
     Print the strategy.
     Parameters:
@@ -29,10 +26,6 @@ def print_strategy(strategy: dict):
         names['Optimizer'] = type(strategy['optimizer']).__name__
     except KeyError:
         raise Exception('No optimizer specified.')
-    try:
-        names['Scheduler'] = type(strategy['scheduler']).__name__
-    except KeyError:
-        raise Exception('No scheduler specified.')
     try:
         names['Criterion'] = strategy['criterion'].__name__
     except KeyError:
