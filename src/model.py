@@ -138,7 +138,7 @@ class GAN(nn.Module):
 
         # Iteratate over the batches of the training dataset
         with tqdm(dataloader, desc=f'Training : {self.discriminator.name}') as pbar:
-            for input in pbar:  
+            for input, _ in pbar:  
 
                 # Move data to device
                 input = input.to(self.device)
@@ -198,7 +198,7 @@ class GAN(nn.Module):
 
         # Iteratate over the batches of the training dataset
         with tqdm(dataloader, desc=f'Training : {self.generator.name}') as pbar:
-            for input in pbar:  
+            for input, _ in pbar:  
 
                 # Move data to device
                 input = input.to(self.device)
