@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 from torchvision.utils import save_image
 from torchvision.io import read_image
-from torch.utils.tensorboard import SummaryWriter
+from tensorboard import SummaryWriter
 
 import numpy as np
 from tqdm import tqdm
