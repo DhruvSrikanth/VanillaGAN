@@ -6,7 +6,7 @@ CREATE = mkdir
 PRINT = @echo
 
 # Paths
-LOG_PATH ./logs
+LOG_PATH = ./logs
 
 # targets
 ## setup :		Setup the virtual environment.
@@ -23,6 +23,9 @@ LOG_PATH ./logs
 
 ## clean :		Clean up.
 .PHONY: clean
+
+## visualize :		Visualize results on tensorboard.
+.PHONY: visualize
 
 
 # recipes
@@ -57,8 +60,6 @@ clean:
 	$(REMOVE) ./weights
 	$(PRINT) "Cleaning generated samples"
 	$(REMOVE) ./samples
-	$(PRINT) "Cleaning models"	
-	$(REMOVE) ./models
 	$(PRINT) "Cleaning logs"
 	$(REMOVE) ./logs
 	$(PRINT) ""
@@ -67,7 +68,6 @@ create_temp:
 	$(PRINT) "Creating directory structure..."
 	$(CREATE) ./weights
 	$(CREATE) ./samples
-	$(CREATE) ./models
 	$(CREATE) ./logs
 	$(PRINT) ""
 

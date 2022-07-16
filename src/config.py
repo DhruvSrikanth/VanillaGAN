@@ -19,7 +19,7 @@ config = {
     # Save parameters
     'sample interval': 1,
     'sample save path': './samples',
-    'model save path': './models',
+    'model save path': './weights',
     # Log parameters
     'log path': './logs',
 }
