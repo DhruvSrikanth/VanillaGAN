@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets
 
-def get_dataloader(type: str, batch_size: int, shuffle: bool, num_workers: int=1, transform: object=None) -> DataLoader:
+def get_dataloader(type: str, batch_size: int, shuffle: bool, num_workers: int=1, transform: object=None):
     """
     Get data loader for MNIST dataset.
     Params:

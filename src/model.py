@@ -4,7 +4,7 @@ from torch.autograd import Variable
 from torchvision.utils import save_image
 
 import numpy as np
-import tqdm
+from tqdm import tqdm
 
 import typing
 import warnings
@@ -39,7 +39,7 @@ class Generator(nn.Module):
                 A list of modules that make up the block.
             '''
             # Fully connected layer
-            layers = [nn.Linear(in_features=in_features, out_feature=out_features)]
+            layers = [nn.Linear(in_features=in_features, out_features=out_features)]
 
             if normalize:
                 # Batch normalization layer
@@ -92,7 +92,7 @@ class Generator(nn.Module):
             # Initialize bias to zero
             nn.init.zeros_(m.bias)
         
-    def forward(self, z: torch.Tensor) -> torch.Tensor:
+    def forward(self, z: torch.FloatTensor) -> torch.FloatTensor:
         '''
         Forward pass of the generator.
         Parameters:
@@ -132,7 +132,7 @@ class Discriminator(nn.Module):
         self.name = "Discriminator" if name is None else name
         self.in_shape = in_shape
         self.n_blocks = n_blocks
-
+        
         def block(in_features, out_features, normalize=True, regularize=True) -> typing.List[nn.Module]:
             '''
             Each block that makes up the discriminator.
@@ -145,7 +145,7 @@ class Discriminator(nn.Module):
                 A list of modules that make up the block.
             '''
             # Fully connected layer
-            layers = [nn.Linear(in_features=in_features, out_feature=out_features)]
+            layers = [nn.Linear(in_features=in_features, out_features=out_features)]
 
             if normalize:
                 # Batch normalization layer
@@ -172,7 +172,7 @@ class Discriminator(nn.Module):
         self.inter_blocks = nn.ModuleDict({})
         in_dim = self.inter_dim
         for i in range(self.n_blocks):
-            out_dim =  in_dim / 2
+            out_dim =  int(in_dim / 2)
             if out_dim >= 2:
                 self.inter_blocks[f'inter_block_{i+1}'] = nn.Sequential(*block(in_features=in_dim, out_features=out_dim, normalize=True, regularize=True))
                 in_dim = out_dim
@@ -205,7 +205,7 @@ class Discriminator(nn.Module):
             # Initialize bias to zero
             nn.init.zeros_(m.bias)
         
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
         '''
         Forward pass of the discriminator.
         Parameters:
@@ -242,7 +242,7 @@ class GAN(nn.Module):
         Returns:
             None
         '''
-        super(GAN).__init__()
+        super(GAN, self).__init__()
         self.name = "GAN" if name is None else name
         self.z_dim = z_dim
         self.g_blocks = g_blocks
@@ -256,7 +256,7 @@ class GAN(nn.Module):
         # Initialize discriminator
         self.discriminator = Discriminator(in_shape=self.out_shape, n_blocks=self.d_blocks, name='Discriminator').to(self.device)
     
-    def discriminator_train_step(self, dataloader: torch.utils.data.Dataloader, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module) -> float:
+    def discriminator_train_step(self, dataloader, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module) -> float:
         '''
         Each training step of the discriminator.
         Parameters:
@@ -275,7 +275,7 @@ class GAN(nn.Module):
 
         # Iteratate over the batches of the training dataset
         with tqdm(dataloader, desc=f'Training : {self.discriminator.name}') as pbar:
-            for input, _ in pbar:
+            for input, something in pbar:
                 # Move data to device and configure input
                 real_samples = Variable(input.type(torch.FloatTensor)).to(self.device)
                 
@@ -317,7 +317,7 @@ class GAN(nn.Module):
 
         return running_loss
     
-    def discriminator_train_loop(self, dataloader: torch.utils.data.Dataloader, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module, k: int=1) -> float:
+    def discriminator_train_loop(self, dataloader, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module, k: int=1) -> float:
         '''
         Training loop of the discriminator.
         Parameters:
@@ -339,7 +339,7 @@ class GAN(nn.Module):
         
         return running_loss
     
-    def generator_train_step(self, dataloader: torch.utils.data.Dataloader, generator_optimizer: torch.optim, generator_loss_fn: torch.nn.Module) -> float:
+    def generator_train_step(self, dataloader, generator_optimizer: torch.optim, generator_loss_fn: torch.nn.Module) -> float:
         '''
         Each training step of the generator.
         Parameters:
@@ -393,7 +393,7 @@ class GAN(nn.Module):
 
         return running_loss
     
-    def train(self, dataloader: torch.utils.data.Dataloader, generator_strategy: dict, discriminator_strategy: dict, epochs: int, sample_interval: int, sample_save_path: str, model_save_path: str) -> None:
+    def train(self, dataloader, batch_size: int, generator_strategy: dict, discriminator_strategy: dict, epochs: int, sample_interval: int, sample_save_path: str, model_save_path: str) -> None:
         '''
         Training loop for the GAN.
         Parameters:
@@ -407,14 +407,14 @@ class GAN(nn.Module):
         Returns:
             None
         '''
-
+        
         # Training loop for the GAN
         for epoch in range(epochs):
             print('-' * 50)
             print(f'Starting Epoch {epoch + 1}/{epochs}:')
 
             # Train the discriminator
-            discriminator_loss = self.discriminator_train_loop(k=discriminator_strategy['disciminator_epochs'], dataloader=dataloader, discriminator_optimizer=discriminator_strategy['optimizer'], discriminator_loss_fn=discriminator_strategy['criterion'])
+            discriminator_loss = self.discriminator_train_loop(k=discriminator_strategy['epochs'], dataloader=dataloader, discriminator_optimizer=discriminator_strategy['optimizer'], discriminator_loss_fn=discriminator_strategy['criterion'])
 
             # Train the generator
             generator_loss = self.generator_train_step(dataloader=dataloader, generator_optimizer=generator_strategy['optimizer'], generator_loss_fn=generator_strategy['criterion'])
@@ -423,9 +423,8 @@ class GAN(nn.Module):
             print(f'Epoch: {epoch + 1} - Generator loss: {generator_loss:.6f} - Discriminator loss: {discriminator_loss:.6f}')
 
             if epoch % sample_interval == 0:
-                input_shape = dataloader[0]
                 # Save the samples
-                self.save_batch(save_path=sample_save_path, input_shape=input_shape, epoch=epoch, loss=generator_loss, n_images=5)
+                self.save_batch(save_path=sample_save_path, batch_size=batch_size, epoch=epoch, loss=generator_loss, n_images=5)
                 print(f'Saved samples to {sample_save_path}.')
             
             # Save the model
@@ -434,17 +433,17 @@ class GAN(nn.Module):
             
             print('-' * 50)
     
-    def save_batch(self, save_path: str, epoch: int, input_shape: tuple, loss: int, n_images: int=5) -> None:
+    def save_batch(self, save_path: str, epoch: int, batch_size: int, loss: int, n_images: int=5) -> None:
         '''
         Save a batch of samples to a file.
         Parameters:
             save_path: The path to save the samples to.
             epoch: The epoch number.
-            input_shape: The shape of the input.
+            batch_size: The batch_size.
             loss: The loss of the generator.
         '''
         # Sample noise
-        z = Variable(torch.FloatTensor(np.random.normal(0, 1, (input_shape.shape[0], self.z_dim)))).to(self.device)
+        z = Variable(torch.FloatTensor(np.random.normal(0, 1, (batch_size, self.z_dim)))).to(self.device)
 
         # Forward pass to get fake sample
         fake_sample = self.generator(z)
@@ -462,8 +461,7 @@ class GAN(nn.Module):
             None
         '''
         # Save the generator
-        torch.save(self.generator.state_dict(), f"{save_path}/generator_epoch_{epoch}_loss_{generator_loss}.pth")
+        torch.save(self.generator.state_dict(), f"{save_path}/generator_epoch_{epoch}_loss_{generator_loss}.pt")
         # Save the discriminator
-        torch.save(self.discriminator.state_dict(), f"{save_path}/discriminator_epoch_{epoch}_loss_{discriminator_loss}.pth")
-                
+        torch.save(self.discriminator.state_dict(), f"{save_path}/discriminator_epoch_{epoch}_loss_{discriminator_loss}.pt")
 

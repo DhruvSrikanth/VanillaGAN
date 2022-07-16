@@ -62,13 +62,14 @@ class Experiments():
         discriminator_strategy = {
             'optimizer': torch.optim.Adam(model.discriminator.parameters(), lr=self.config['learning rate'], betas=(self.config['beta1'], self.config['beta2'])),
             'criterion': torch.nn.BCELoss(),
+            'epochs': self.config['discriminator epochs'],
         }
         
         if verbose:
-            print_strategy(strategy=generator_stategy)
-            print_strategy(strategy=discriminator_strategy)
+            print_strategy(strategy=generator_stategy, model=model.generator.name)
+            print_strategy(strategy=discriminator_strategy, model=model.discriminator.name)
 
         
         # Train the model
-        model.train(dataloaders=self.dataloaders['train'], generator_strategy=generator_stategy, discriminator_strategy=discriminator_strategy, epochs=self.config['epochs'], sample_interval=self.config['sample interval'], sample_save_path=self.config['sample save path'],model_save_path=self.config['model save path'])
+        model.train(dataloader=self.dataloaders['train'], batch_size=self.config['batch size'], generator_strategy=generator_stategy, discriminator_strategy=discriminator_strategy, epochs=self.config['epochs'], sample_interval=self.config['sample interval'], sample_save_path=self.config['sample save path'],model_save_path=self.config['model save path'])
         print(f"Model trained:\n{'-'*50}\n")

@@ -14,11 +14,12 @@ def print_config(config: dict) -> None:
         i += 1
     print("\n")
 
-def print_strategy(strategy: dict) -> None:
+def print_strategy(strategy: dict, model: str) -> None:
     """
     Print the strategy.
     Parameters:
         strategy: (type dict) strategy.
+        model: (type str) model name.
     """
 
     names = {}
@@ -27,12 +28,12 @@ def print_strategy(strategy: dict) -> None:
     except KeyError:
         raise Exception('No optimizer specified.')
     try:
-        names['Criterion'] = strategy['criterion'].__name__
+        names['Criterion'] = type(strategy['criterion']).__name__
     except KeyError:
         raise Exception('No criterion specified.')
     
 
-    print("\nGiven below is the strategy for training the model:")
+    print(f"\nGiven below is the strategy for training the {model} model:")
     i = 1
     for name, value in names.items():
         print(f"\t{i}. {name} : {value}")

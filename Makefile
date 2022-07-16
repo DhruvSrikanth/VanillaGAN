@@ -21,10 +21,12 @@ PRINT = @echo
 ## clean :		Clean up.
 .PHONY: clean
 
+
 # recipes
-setup: create_env 
+setup: create_env create_temp
 install: install_requirements
 update: update_requirements
+experiments: clean create_temp run_experiments
 
 # rules
 create_env:
@@ -42,17 +44,24 @@ update_requirements:
 	$(PIP) freeze > ./requirements.txt
 	$(PRINT) ""
 
-experiments:
+run_experiments:
 	$(PRINT) "Running experiments..."
-	$(PYTHON) ./src/experiments.py
+	$(PYTHON) ./src/main.py
 	$(PRINT) ""
 
 clean:
 	$(PRINT) "Cleaning weights"
 	$(REMOVE) ./weights
-	$(CREATE) weights
 	$(PRINT) "Cleaning generated samples"
 	$(REMOVE) ./samples
-	$(CREATE) samples
+	$(PRINT) "Cleaning models"	
+	$(REMOVE) ./models
+	$(PRINT) ""
+
+create_temp:
+	$(PRINT) "Creating directory structure..."
+	$(CREATE) ./weights
+	$(CREATE) ./samples
+	$(CREATE) ./models
 	$(PRINT) ""
 

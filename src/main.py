@@ -11,7 +11,7 @@ def main() -> None:
     experiments = Experiments(config)
 
     # Train the model
-    experiments.train(verbose=True)
+    experiments.train(verbose=False)
     
 if __name__ == '__main__':
     main()
