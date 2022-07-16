@@ -6,7 +6,7 @@ config = {
     'batch size': 32, 
     'num workers': 8, 
     'image shape': (1, 28, 28),
-    'train samples': 16000, 
+    'train samples': 32000, 
     'test samples': 4000,
     # Model parameters
     'generator blocks' : 2,
