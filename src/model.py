@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
+import torchvision
 from torchvision.utils import save_image
 from torchvision.io import read_image
 from torch.utils.tensorboard import SummaryWriter
@@ -432,6 +433,10 @@ class GAN(nn.Module):
 
             # Print the losses
             print(f'Epoch: {epoch + 1} - Generator loss: {generator_loss:.6f} - Discriminator loss: {discriminator_loss:.6f}')
+            # Add the losses to tensorboard
+            writer.add_scalar('Generator loss', generator_loss, epoch)
+            writer.add_scalar('Discriminator loss', discriminator_loss, epoch)
+            writer.add_scalars('experiment_1', {'Generator loss': generator_loss, 'Discriminator loss': discriminator_loss}, epoch)
 
             if epoch % sample_interval == 0:
                 # Save the samples
@@ -466,7 +471,7 @@ class GAN(nn.Module):
         save_image(fake_sample.data[:n_images**2], f"{save_path}/generated_samples_epoch_{epoch}_loss_{loss}.png", nrow=n_images, normalize=True)
 
         # Read in and add to tensorboard
-        img_grid = read_image(f"{save_path}/generated_samples_epoch_{epoch}_loss_{loss}.png")
+        img_grid = read_image(f"{save_path}/generated_samples_epoch_{epoch}_loss_{loss}.png", mode=torchvision.io.ImageReadMode.GRAY)
         writer.add_image(f'sample_epoch_{epoch}', img_grid)
     
     def save_model(self, save_path: str, epoch: int, generator_loss: int, discriminator_loss: int) -> None:

@@ -3,8 +3,8 @@ config = {
     'initial seed': 1, 
     'device': 'mps', 
     # Data parameters
-    'batch size': 8, 
-    'num workers': 4, 
+    'batch size': 16, 
+    'num workers': 6, 
     'image shape': (1, 28, 28),
     # Model parameters
     'generator blocks' : 3,
@@ -14,7 +14,7 @@ config = {
     'learning rate': 0.01, 
     'beta1': 0.5,
     'beta2': 0.999,
-    'epochs': 2, 
+    'epochs': 5, 
     'discriminator epochs': 1,
     # Save parameters
     'sample interval': 1,

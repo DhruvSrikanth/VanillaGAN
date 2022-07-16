@@ -5,6 +5,9 @@ REMOVE = rm -rf
 CREATE = mkdir
 PRINT = @echo
 
+# Paths
+LOG_PATH ./logs
+
 # targets
 ## setup :		Setup the virtual environment.
 .PHONY: setup
@@ -68,3 +71,5 @@ create_temp:
 	$(CREATE) ./logs
 	$(PRINT) ""
 
+visualize:
+	tensorboard --logdir $(LOG_PATH)
