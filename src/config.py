@@ -16,7 +16,7 @@ config = {
     'learning rate': 0.01, 
     'beta1': 0.5,
     'beta2': 0.999,
-    'epochs': 5, 
+    'epochs': 10, 
     'discriminator epochs': 1,
     # Save parameters
     'sample interval': 1,
