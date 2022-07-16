@@ -74,5 +74,5 @@ class Experiments():
 
         
         # Train the model
-        model.train(dataloader=self.dataloaders['train'], batch_size=self.config['batch size'], generator_strategy=generator_stategy, discriminator_strategy=discriminator_strategy, epochs=self.config['epochs'], sample_interval=self.config['sample interval'], sample_save_path=self.config['sample save path'], model_save_path=self.config['model save path'], log_path=self.config['log path'])
+        model.train(dataloader=self.dataloaders['train'], batch_size=self.config['batch size'], generator_strategy=generator_stategy, discriminator_strategy=discriminator_strategy, epochs=self.config['epochs'], sample_interval=self.config['sample interval'], sample_save_path=self.config['sample save path'], model_save_path=self.config['model save path'], log_path=self.config['log path'], experiment_number=self.config['experiment number'])
         print(f"Model trained:\n{'-'*50}\n")

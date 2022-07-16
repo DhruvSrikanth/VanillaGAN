@@ -137,3 +137,7 @@ data/
 
 # Model weights
 weights/
+
+# Log directory
+logs
+logs/

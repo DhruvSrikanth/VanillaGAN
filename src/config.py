@@ -24,4 +24,5 @@ config = {
     'model save path': './weights',
     # Log parameters
     'log path': './logs',
+    'experiment number': 1,
 }

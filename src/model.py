@@ -396,7 +396,7 @@ class GAN(nn.Module):
 
         return running_loss
     
-    def train(self, dataloader, batch_size: int, generator_strategy: dict, discriminator_strategy: dict, epochs: int, sample_interval: int, sample_save_path: str, model_save_path: str, log_path: str) -> None:
+    def train(self, dataloader, batch_size: int, generator_strategy: dict, discriminator_strategy: dict, epochs: int, sample_interval: int, sample_save_path: str, model_save_path: str, log_path: str, experiment_number: int) -> None:
         '''
         Training loop for the GAN.
         Parameters:
@@ -408,11 +408,12 @@ class GAN(nn.Module):
             sample_save_path: The path to save the samples to.
             model_save_path: The path to save the model to.
             log_path: The path to save the logs to.
+            experiment_number: The experiment number.
         Returns:
             None
         '''
         # Log results to tensorboard
-        writer = SummaryWriter(f"{log_path}/experiment_1")
+        writer = SummaryWriter(f"{log_path}/experiment_{experiment_number}")
         
         # Add models to tensorboard
         # generator_input = Variable(torch.FloatTensor(np.random.normal(0, 1, (batch_size, self.z_dim)))).to(self.device)
