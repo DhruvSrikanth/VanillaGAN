@@ -434,9 +434,10 @@ class GAN(nn.Module):
             # Print the losses
             print(f'Epoch: {epoch + 1} - Generator loss: {generator_loss:.6f} - Discriminator loss: {discriminator_loss:.6f}')
             # Add the losses to tensorboard
-            writer.add_scalar('Generator loss', generator_loss, epoch)
-            writer.add_scalar('Discriminator loss', discriminator_loss, epoch)
-            writer.add_scalars('experiment_1', {'Generator loss': generator_loss, 'Discriminator loss': discriminator_loss}, epoch)
+            self.visualize_loss(epoch=epoch, writer=writer, generator_loss=generator_loss, discriminator_loss=discriminator_loss)
+
+            # visualize distribution
+            self.visualize_distribution(batch_size=batch_size, dataloader=dataloader, epoch=epoch, writer=writer)
 
             if epoch % sample_interval == 0:
                 # Save the samples
@@ -466,6 +467,9 @@ class GAN(nn.Module):
         # Sample noise
         z = Variable(torch.FloatTensor(np.random.normal(0, 1, (batch_size, self.z_dim)))).to(self.device)
 
+        # Set the model to evaluation mode
+        self.generator.eval()
+        
         # Forward pass to get fake sample
         fake_sample = self.generator(z)
         save_image(fake_sample.data[:n_images**2], f"{save_path}/generated_samples_epoch_{epoch}_loss_{loss}.png", nrow=n_images, normalize=True)
@@ -489,4 +493,45 @@ class GAN(nn.Module):
         torch.save(self.generator.state_dict(), f"{save_path}/generator_epoch_{epoch}_loss_{generator_loss}.pt")
         # Save the discriminator
         torch.save(self.discriminator.state_dict(), f"{save_path}/discriminator_epoch_{epoch}_loss_{discriminator_loss}.pt")
+    
+    def visualize_distribution(self, epoch: int, batch_size: int, dataloader: object, writer: object) -> None:
+        '''
+        Visualize the distribution of real and inferred data.
+        Parameters:
+            epoch: The epoch number.
+            batch_size: The batch_size.
+            dataloader: The dataloader to use.
+            writer: The tensorboard writer.
+        Returns:
+            None
+        '''
+        # Sample noise
+        z = Variable(torch.FloatTensor(np.random.normal(0, 1, (batch_size, self.z_dim)))).to(self.device)
 
+        # Set the model to evaluation mode
+        self.generator.eval()
+        
+        # Forward pass to get fake sample
+        fake_sample = self.generator(z)
+        writer.add_histogram('Inferred distribution', values=fake_sample, global_step=epoch, bins=100)
+
+        # Get real sample from dataloader
+        real_sample = next(iter(dataloader))[0]
+        real_sample = Variable(torch.FloatTensor(real_sample)).to(self.device)
+        writer.add_histogram('Actual distribution', values=real_sample, global_step=epoch, bins=100)
+        
+    
+    def visualize_loss(self, epoch: int, generator_loss: int, discriminator_loss: int, writer: object) -> None:
+        '''
+        Visualize the loss.
+        Parameters:
+            epoch: The epoch number.
+            generator_loss: The loss of the generator.
+            discriminator_loss: The loss of the discriminator.
+            writer: The tensorboard writer.
+        Returns:
+            None
+        '''
+        writer.add_scalar('Generator loss', generator_loss, epoch)
+        writer.add_scalar('Discriminator loss', discriminator_loss, epoch)
+        writer.add_scalars('experiment_1', {'Generator loss': generator_loss, 'Discriminator loss': discriminator_loss}, epoch)

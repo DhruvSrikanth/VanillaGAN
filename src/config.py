@@ -6,7 +6,7 @@ config = {
     'batch size': 32, 
     'num workers': 8, 
     'image shape': (1, 28, 28),
-    'train samples': 32000, 
+    'train samples': 60000, 
     'test samples': 4000,
     # Model parameters
     'generator blocks' : 2,
@@ -16,7 +16,7 @@ config = {
     'learning rate': 0.01, 
     'beta1': 0.5,
     'beta2': 0.999,
-    'epochs': 50, 
+    'epochs': 100, 
     'discriminator epochs': 1,
     # Save parameters
     'sample interval': 1,
