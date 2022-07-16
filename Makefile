@@ -56,6 +56,8 @@ clean:
 	$(REMOVE) ./samples
 	$(PRINT) "Cleaning models"	
 	$(REMOVE) ./models
+	$(PRINT) "Cleaning logs"
+	$(REMOVE) ./logs
 	$(PRINT) ""
 
 create_temp:
@@ -63,5 +65,6 @@ create_temp:
 	$(CREATE) ./weights
 	$(CREATE) ./samples
 	$(CREATE) ./models
+	$(CREATE) ./logs
 	$(PRINT) ""
 

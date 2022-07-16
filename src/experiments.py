@@ -2,8 +2,11 @@ from utils import print_config, decide_device, print_strategy
 from data import get_dataloader
 from model import GAN
 
+
 import torch
 from torchvision import transforms
+
+
 
 class Experiments():
     def __init__(self, config: dict) -> None:
@@ -71,5 +74,5 @@ class Experiments():
 
         
         # Train the model
-        model.train(dataloader=self.dataloaders['train'], batch_size=self.config['batch size'], generator_strategy=generator_stategy, discriminator_strategy=discriminator_strategy, epochs=self.config['epochs'], sample_interval=self.config['sample interval'], sample_save_path=self.config['sample save path'],model_save_path=self.config['model save path'])
+        model.train(dataloader=self.dataloaders['train'], batch_size=self.config['batch size'], generator_strategy=generator_stategy, discriminator_strategy=discriminator_strategy, epochs=self.config['epochs'], sample_interval=self.config['sample interval'], sample_save_path=self.config['sample save path'], model_save_path=self.config['model save path'], log_path=self.config['log path'])
         print(f"Model trained:\n{'-'*50}\n")

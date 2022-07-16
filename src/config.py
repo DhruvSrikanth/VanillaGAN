@@ -20,4 +20,6 @@ config = {
     'sample interval': 1,
     'sample save path': './samples',
     'model save path': './models',
+    # Log parameters
+    'log path': './logs',
 }

@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from torchvision.utils import save_image
+from torchvision.io import read_image
+from torch.utils.tensorboard import SummaryWriter
 
 import numpy as np
 from tqdm import tqdm
@@ -393,7 +395,7 @@ class GAN(nn.Module):
 
         return running_loss
     
-    def train(self, dataloader, batch_size: int, generator_strategy: dict, discriminator_strategy: dict, epochs: int, sample_interval: int, sample_save_path: str, model_save_path: str) -> None:
+    def train(self, dataloader, batch_size: int, generator_strategy: dict, discriminator_strategy: dict, epochs: int, sample_interval: int, sample_save_path: str, model_save_path: str, log_path: str) -> None:
         '''
         Training loop for the GAN.
         Parameters:
@@ -404,9 +406,16 @@ class GAN(nn.Module):
             sample_interval: The number of epochs between each sample generation to save.
             sample_save_path: The path to save the samples to.
             model_save_path: The path to save the model to.
+            log_path: The path to save the logs to.
         Returns:
             None
         '''
+        # Log results to tensorboard
+        writer = SummaryWriter(f"{log_path}/experiment_1")
+        
+        # Add models to tensorboard
+        writer.add_graph(self.generator, torch.randn(batch_size, self.z_dim))
+        writer.add_graph(self.discriminator, torch.randn(batch_size, self.out_shape))
         
         # Training loop for the GAN
         for epoch in range(epochs):
@@ -424,7 +433,7 @@ class GAN(nn.Module):
 
             if epoch % sample_interval == 0:
                 # Save the samples
-                self.save_batch(save_path=sample_save_path, batch_size=batch_size, epoch=epoch, loss=generator_loss, n_images=5)
+                self.save_batch(save_path=sample_save_path, batch_size=batch_size, epoch=epoch, loss=generator_loss, n_images=4, writer=writer)
                 print(f'Saved samples to {sample_save_path}.')
             
             # Save the model
@@ -432,8 +441,11 @@ class GAN(nn.Module):
             print(f'Saved model to {model_save_path}.')
             
             print('-' * 50)
+        
+        # Release the resource
+        writer.close()
     
-    def save_batch(self, save_path: str, epoch: int, batch_size: int, loss: int, n_images: int=5) -> None:
+    def save_batch(self, save_path: str, epoch: int, batch_size: int, loss: int, writer, n_images: int=4) -> None:
         '''
         Save a batch of samples to a file.
         Parameters:
@@ -441,6 +453,8 @@ class GAN(nn.Module):
             epoch: The epoch number.
             batch_size: The batch_size.
             loss: The loss of the generator.
+            n_images: The number of images to save.
+            writer: The tensorboard writer.
         '''
         # Sample noise
         z = Variable(torch.FloatTensor(np.random.normal(0, 1, (batch_size, self.z_dim)))).to(self.device)
@@ -448,6 +462,10 @@ class GAN(nn.Module):
         # Forward pass to get fake sample
         fake_sample = self.generator(z)
         save_image(fake_sample.data[:n_images**2], f"{save_path}/generated_samples_epoch_{epoch}_loss_{loss}.png", nrow=n_images, normalize=True)
+
+        # Read in and add to tensorboard
+        img_grid = read_image(f"{save_path}/generated_samples_epoch_{epoch}_loss_{loss}.png")
+        writer.add_image(f'sample_epoch_{epoch}', img_grid)
     
     def save_model(self, save_path: str, epoch: int, generator_loss: int, discriminator_loss: int) -> None:
         '''
