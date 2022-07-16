@@ -28,8 +28,8 @@ class Experiments():
 
         # Get the data loader
         self.dataloaders = {
-            'train': get_dataloader(type='train', batch_size=self.config['batch size'], shuffle=True, num_workers=self.config['num workers'], transform=transform, samples=self.config['train samples']),
-            'test': get_dataloader(type='test', batch_size=self.config['batch size'], shuffle=False, num_workers=self.config['num workers'], transform=transform, samples=self.config['test samples']),
+            'train': get_dataloader(type='train', batch_size=self.config['batch size'], num_workers=self.config['num workers'], transform=transform, samples=self.config['train samples']),
+            'test': get_dataloader(type='test', batch_size=self.config['batch size'], num_workers=self.config['num workers'], transform=transform, samples=self.config['test samples']),
         }
 
     def train(self, verbose: bool=True) -> None:
