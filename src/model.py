@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 from torchvision.utils import save_image
 from torchvision.io import read_image
-from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 
 import numpy as np
 from tqdm import tqdm
@@ -414,8 +414,10 @@ class GAN(nn.Module):
         writer = SummaryWriter(f"{log_path}/experiment_1")
         
         # Add models to tensorboard
-        writer.add_graph(self.generator, torch.randn(batch_size, self.z_dim))
-        writer.add_graph(self.discriminator, torch.randn(batch_size, self.out_shape))
+        # generator_input = Variable(torch.FloatTensor(np.random.normal(0, 1, (batch_size, self.z_dim)))).to(self.device)
+        # writer.add_graph(self.generator, generator_input)
+        # discriminator_input = Variable(torch.FloatTensor(np.random.normal(0, 1, tuple([batch_size] + list(self.out_shape))))).to(self.device)
+        # writer.add_graph(self.discriminator, discriminator_input)
         
         # Training loop for the GAN
         for epoch in range(epochs):
