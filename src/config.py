@@ -3,14 +3,14 @@ config = {
     'initial seed': 1, 
     'device': 'mps', 
     # Data parameters
-    'batch size': 128, 
+    'batch size': 64, 
     'num workers': 8, 
     'image shape': (1, 28, 28),
     'train samples': 60000, 
     'test samples': 4000,
     # Model parameters
-    'generator blocks' : 2,
-    'discriminator blocks' : 2,
+    'generator blocks' : 3,
+    'discriminator blocks' : 3,
     # Training parameters
     'latent dimension': 64,
     'learning rate': 0.01, 
@@ -18,7 +18,7 @@ config = {
     'beta2': 0.999,
     'epochs': 100, 
     'discriminator epochs': 1,
-    'generator epochs': 2,
+    'generator epochs': 3,
     # Save parameters
     'sample interval': 1,
     'sample save path': './samples',
