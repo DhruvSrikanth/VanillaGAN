@@ -261,7 +261,7 @@ class GAN(nn.Module):
         # Initialize discriminator
         self.discriminator = Discriminator(in_shape=self.out_shape, n_blocks=self.d_blocks, name='Discriminator').to(self.device)
     
-    def discriminator_train_step(self, dataloader, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module) -> float:
+    def discriminator_train_step(self, dataloader, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module) -> dict:
         '''
         Each training step of the discriminator.
         Parameters:
@@ -269,11 +269,16 @@ class GAN(nn.Module):
             discriminator_optimizer: The optimizer to use.
             discriminator_loss_fn: The loss function to use.
         Returns:
-            The loss of the discriminator.
+            The loss of the discriminator containing the following keys:
+                running_loss: The running loss of the discriminator.
+                running_loss_fake: The running loss of the discriminator due to fake samples by the generator.
+                running_loss_real: The running loss of the discriminator due to real samples from the data.
         '''
 
         # Running loss
         running_loss = 0.0
+        running_real_loss = 0.0
+        running_fake_loss = 0.0
 
         # Set the model to training mode
         self.discriminator.train()
@@ -314,6 +319,8 @@ class GAN(nn.Module):
 
                 # Update the running loss
                 running_loss += d_loss.item()
+                running_real_loss += real_loss.item()
+                running_fake_loss += fake_loss.item()
                 
                 
                 # Update the progress bar
@@ -322,10 +329,12 @@ class GAN(nn.Module):
         
         # Return the average loss
         running_loss /= len(dataloader.dataset)
+        running_real_loss /= len(dataloader.dataset)
+        running_fake_loss /= len(dataloader.dataset)
 
-        return running_loss
+        return {'total': running_loss, 'real':running_real_loss, 'fake':running_fake_loss}
     
-    def discriminator_train_loop(self, dataloader, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module, k: int=1) -> float:
+    def discriminator_train_loop(self, dataloader, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module, k: int=1) -> dict:
         '''
         Training loop of the discriminator.
         Parameters:
@@ -334,18 +343,28 @@ class GAN(nn.Module):
             discriminator_optimizer: The optimizer to use.
             discriminator_loss_fn: The loss function to use.
         Returns:
-            The loss of the discriminator.
+            The loss of the discriminator containing the following keys:
+                running_loss: The running loss of the discriminator.
+                running_loss_fake: The running loss of the discriminator due to fake samples by the generator.
+                running_loss_real: The running loss of the discriminator due to real samples from the data.
         '''
         # Running loss
         running_loss = 0.0
+        running_real_loss = 0.0
+        running_fake_loss = 0.0
 
         # For each training step of the discriminator
         for _ in range(k):
             # Perform a training step
-            running_loss += self.discriminator_train_step(dataloader=dataloader, discriminator_optimizer=discriminator_optimizer, discriminator_loss_fn=discriminator_loss_fn)
+            loss = self.discriminator_train_step(dataloader=dataloader, discriminator_optimizer=discriminator_optimizer, discriminator_loss_fn=discriminator_loss_fn)
+            running_loss += loss['total']
+            running_real_loss += loss['real']
+            running_fake_loss += loss['fake']
         running_loss /= k
+        running_real_loss /= k
+        running_fake_loss /= k
         
-        return running_loss
+        return {'total': running_loss, 'real':running_real_loss, 'fake':running_fake_loss}
     
     def generator_train_step(self, dataloader, generator_optimizer: torch.optim, generator_loss_fn: torch.nn.Module) -> float:
         '''
@@ -463,9 +482,9 @@ class GAN(nn.Module):
             generator_loss = self.generator_train_loop(l=generator_strategy['epochs'], dataloader=dataloader, generator_optimizer=generator_strategy['optimizer'], generator_loss_fn=generator_strategy['criterion'])
 
             # Print the losses
-            print(f'Epoch: {epoch + 1} - Generator loss: {generator_loss:.6f} - Discriminator loss: {discriminator_loss:.6f}')
+            print(f"Epoch: {epoch + 1} - Generator loss: {generator_loss:.6f} - Discriminator loss: {discriminator_loss['total']:.6f}")
             # Add the losses to tensorboard
-            self.visualize_loss(epoch=epoch, writer=writer, generator_loss=generator_loss, discriminator_loss=discriminator_loss)
+            self.visualize_loss(epoch=epoch, writer=writer, generator_loss=generator_loss, discriminator_loss=discriminator_loss['total'], discriminator_loss_real=discriminator_loss['real'], discriminator_loss_fake=discriminator_loss['fake'])
 
             # visualize distribution
             self.visualize_distribution(batch_size=batch_size, dataloader=dataloader, epoch=epoch, writer=writer)
@@ -552,17 +571,24 @@ class GAN(nn.Module):
         writer.add_histogram('Actual Distribution', values=utils.normalize_tensor(real_sample), global_step=epoch, bins=256)
         
     
-    def visualize_loss(self, epoch: int, generator_loss: int, discriminator_loss: int, writer: object) -> None:
+    def visualize_loss(self, epoch: int, generator_loss: float, discriminator_loss: float, discriminator_loss_real: float, discriminator_loss_fake: float, writer: object) -> None:
         '''
         Visualize the loss.
         Parameters:
             epoch: The epoch number.
             generator_loss: The loss of the generator.
             discriminator_loss: The loss of the discriminator.
+            discriminator_loss_real: The loss of the discriminator for the real data.
+            discriminator_loss_fake: The loss of the discriminator for the fake data.
             writer: The tensorboard writer.
         Returns:
             None
         '''
         # writer.add_scalar('Generator loss', generator_loss, epoch)
         # writer.add_scalar('Discriminator loss', discriminator_loss, epoch)
-        writer.add_scalars('Loss Curves', {'Generator loss': generator_loss, 'Discriminator loss': discriminator_loss}, epoch)
+        writer.add_scalars('Loss Curves', {
+            'Generator loss': generator_loss, 
+            'Discriminator loss (total)': discriminator_loss, 
+            'Discriminator loss (real samples)': discriminator_loss_real,
+            'Discriminator loss (fake samples)': discriminator_loss_fake
+        }, epoch)

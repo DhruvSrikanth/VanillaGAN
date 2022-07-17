@@ -3,7 +3,7 @@ config = {
     'initial seed': 1, 
     'device': 'mps', 
     # Data parameters
-    'batch size': 32, 
+    'batch size': 128, 
     'num workers': 8, 
     'image shape': (1, 28, 28),
     'train samples': 60000, 
