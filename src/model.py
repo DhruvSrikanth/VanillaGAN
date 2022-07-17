@@ -295,7 +295,7 @@ class VanillaGAN(nn.Module):
         discriminator_optimizer.zero_grad()
 
         # Sample noise
-        z = Variable(torch.FloatTensor(np.random.normal(0, 1, (input.shape[0], self.z_dim)))).to(self.device)
+        z = self.sample_noise(input.size(0))
 
         # Forward pass through generator to get fake samples
         fake_sample = self.generator(z)
@@ -377,7 +377,7 @@ class VanillaGAN(nn.Module):
         generator_optimizer.zero_grad()
 
         # Sample noise
-        z = Variable(torch.FloatTensor(np.random.normal(0, 1, (input.shape[0], self.z_dim)))).to(self.device)
+        z = self.sample_noise(input.size(0))
 
         # Forward pass to get fake samples
         fake_sample = self.generator(z)
@@ -488,6 +488,18 @@ class VanillaGAN(nn.Module):
         # Release the resource
         writer.close()
     
+    def sample_noise(self, batch_size: int) -> torch.Tensor:
+        '''
+        Sample noise tensor from a normal distribution.
+        Parameters:
+            batch_size: The number of samples to sample.
+        Returns:
+            The sampled noise.
+        '''
+        # Sample noise
+        z = Variable(torch.FloatTensor(np.random.normal(0, 1, (batch_size, self.z_dim)))).to(self.device)
+        return z
+
     def save_batch(self, save_path: str, epoch: int, batch_size: int, loss: int, writer, n_images: int=4) -> None:
         '''
         Save a batch of samples to a file.
@@ -500,7 +512,7 @@ class VanillaGAN(nn.Module):
             writer: The tensorboard writer.
         '''
         # Sample noise
-        z = Variable(torch.FloatTensor(np.random.normal(0, 1, (batch_size, self.z_dim)))).to(self.device)
+        z = self.sample_noise(batch_size=batch_size)
 
         # Set the model to evaluation mode
         self.generator.eval()
@@ -541,7 +553,7 @@ class VanillaGAN(nn.Module):
             None
         '''
         # Sample noise
-        z = Variable(torch.FloatTensor(np.random.normal(0, 1, (batch_size, self.z_dim)))).to(self.device)
+        z = self.sample_noise(batch_size=batch_size)
 
         # Set the model to evaluation mode
         self.generator.eval()
