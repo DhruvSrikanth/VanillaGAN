@@ -1,6 +1,6 @@
 from utils import print_config, decide_device, print_strategy
 from data import get_dataloader
-from model import GAN
+from model import VanillaGAN
 
 
 import torch
@@ -50,7 +50,7 @@ class Experiments():
         device = torch.device(device=use_device)
 
         # Create the model
-        model = GAN(z_dim=self.config['latent dimension'], g_blocks=self.config['generator blocks'], d_blocks=self.config['discriminator blocks'], out_shape=self.config['image shape'], device=device, name="GAN")
+        model = VanillaGAN(z_dim=self.config['latent dimension'], g_blocks=self.config['generator blocks'], d_blocks=self.config['discriminator blocks'], out_shape=self.config['image shape'], device=device, name="Vanilla GAN")
         if verbose:
             print(f"Given below is the model architecture: \n\t{model.generator}\n\t{model.discriminator}\n")
 

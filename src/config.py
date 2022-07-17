@@ -13,12 +13,12 @@ config = {
     'discriminator blocks' : 3,
     # Training parameters
     'latent dimension': 64,
-    'learning rate': 0.01, 
+    'learning rate': 0.0002, 
     'beta1': 0.5,
     'beta2': 0.999,
     'epochs': 100, 
     'discriminator epochs': 1,
-    'generator epochs': 3,
+    'generator epochs': 1,
     # Save parameters
     'sample interval': 1,
     'sample save path': './samples',

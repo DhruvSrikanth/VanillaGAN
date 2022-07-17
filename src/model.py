@@ -8,6 +8,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 import numpy as np
 from tqdm import tqdm
+import time
 
 import typing
 import warnings
@@ -55,7 +56,7 @@ class Generator(nn.Module):
 
             if regularize:
                 # Regularization layer
-                layers.append(nn.Dropout(p=0.5))
+                layers.append(nn.Dropout(p=0.3))
             
             return layers
         
@@ -69,7 +70,7 @@ class Generator(nn.Module):
         in_dim = 2 * self.z_dim
         for i in range(self.n_blocks):
             out_dim = 2 * in_dim
-            self.inter_blocks[f'inter_block_{i+1}'] = nn.Sequential(*block(in_features=in_dim, out_features=out_dim, normalize=True, regularize=True))
+            self.inter_blocks[f'inter_block_{i+1}'] = nn.Sequential(*block(in_features=in_dim, out_features=out_dim, normalize=True, regularize=False))
             in_dim = out_dim
         
         # Define output block
@@ -161,7 +162,7 @@ class Discriminator(nn.Module):
 
             if regularize:
                 # Regularization layer
-                layers.append(nn.Dropout(p=0.5))
+                layers.append(nn.Dropout(p=0.3))
             
             return layers
         
@@ -233,7 +234,7 @@ class Discriminator(nn.Module):
         
         return validity
 
-class GAN(nn.Module):
+class VanillaGAN(nn.Module):
     def __init__(self, z_dim: int, g_blocks: int, d_blocks: int, out_shape: tuple, device: torch.device, name: str=None) -> None:
         '''
         Initialize the GAN.
@@ -247,8 +248,8 @@ class GAN(nn.Module):
         Returns:
             None
         '''
-        super(GAN, self).__init__()
-        self.name = "GAN" if name is None else name
+        super(VanillaGAN, self).__init__()
+        self.name = "Vanilla GAN" if name is None else name
         self.z_dim = z_dim
         self.g_blocks = g_blocks
         self.d_blocks = d_blocks
@@ -261,11 +262,11 @@ class GAN(nn.Module):
         # Initialize discriminator
         self.discriminator = Discriminator(in_shape=self.out_shape, n_blocks=self.d_blocks, name='Discriminator').to(self.device)
     
-    def discriminator_train_step(self, dataloader, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module) -> dict:
+    def discriminator_train_step(self, input: torch.Tensor, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module) -> dict:
         '''
         Each training step of the discriminator.
         Parameters:
-            dataloader: The dataloader to use.
+            input: Input mini-batch from dataloader.
             discriminator_optimizer: The optimizer to use.
             discriminator_loss_fn: The loss function to use.
         Returns:
@@ -283,63 +284,50 @@ class GAN(nn.Module):
         # Set the model to training mode
         self.discriminator.train()
 
-        # Iteratate over the batches of the training dataset
-        with tqdm(dataloader, desc=f'Training : {self.discriminator.name}') as pbar:
-            for input, something in pbar:
-                # Move data to device and configure input
-                real_samples = Variable(input.type(torch.FloatTensor)).to(self.device)
-                
-                # Adversarial ground truths
-                valid = Variable(torch.FloatTensor(input.size(0), 1).fill_(1.0), requires_grad=False).to(self.device)
-                fake = Variable(torch.FloatTensor(input.size(0), 1).fill_(0.0), requires_grad=False).to(self.device)
-
-                # Zero the gradients
-                discriminator_optimizer.zero_grad()
-
-                # Sample noise
-                z = Variable(torch.FloatTensor(np.random.normal(0, 1, (input.shape[0], self.z_dim)))).to(self.device)
-
-                # Forward pass through generator to get fake samples
-                fake_sample = self.generator(z)
-
-                # Forward pass to get validity scores of real and fake samples
-                real_output = self.discriminator(real_samples)
-                fake_output = self.discriminator(fake_sample.detach())
-
-                # Compute loss: discriminator's ability to classify real from generated samples
-                real_loss = discriminator_loss_fn(real_output, valid)
-                fake_loss = discriminator_loss_fn(fake_output, fake)
-                d_loss = (real_loss + fake_loss) / 2
-
-                # Backward pass
-                d_loss.backward()
-
-                # Update the parameters of the discriminator
-                discriminator_optimizer.step()
-
-                # Update the running loss
-                running_loss += d_loss.item()
-                running_real_loss += real_loss.item()
-                running_fake_loss += fake_loss.item()
-                
-                
-                # Update the progress bar
-                pbar.set_postfix(discriminator_loss='{:.6f}'.format(running_loss))
-                pbar.update()
+        # Move data to device and configure input
+        real_samples = Variable(input.type(torch.FloatTensor)).to(self.device)
         
-        # Return the average loss
-        running_loss /= len(dataloader.dataset)
-        running_real_loss /= len(dataloader.dataset)
-        running_fake_loss /= len(dataloader.dataset)
+        # Adversarial ground truths
+        valid = Variable(torch.FloatTensor(input.size(0), 1).fill_(1.0), requires_grad=False).to(self.device)
+        fake = Variable(torch.FloatTensor(input.size(0), 1).fill_(0.0), requires_grad=False).to(self.device)
+
+        # Zero the gradients
+        discriminator_optimizer.zero_grad()
+
+        # Sample noise
+        z = Variable(torch.FloatTensor(np.random.normal(0, 1, (input.shape[0], self.z_dim)))).to(self.device)
+
+        # Forward pass through generator to get fake samples
+        fake_sample = self.generator(z)
+
+        # Forward pass to get validity scores of real and fake samples
+        real_output = self.discriminator(real_samples)
+        fake_output = self.discriminator(fake_sample.detach())
+
+        # Compute loss: discriminator's ability to classify real from generated samples
+        real_loss = discriminator_loss_fn(real_output, valid)
+        fake_loss = discriminator_loss_fn(fake_output, fake)
+        d_loss = (real_loss + fake_loss) / 2
+
+        # Backward pass
+        d_loss.backward()
+
+        # Update the parameters of the discriminator
+        discriminator_optimizer.step()
+
+        # Update the running loss
+        running_loss = d_loss.item()
+        running_real_loss = real_loss.item()
+        running_fake_loss = fake_loss.item()
 
         return {'total': running_loss, 'real':running_real_loss, 'fake':running_fake_loss}
     
-    def discriminator_train_loop(self, dataloader, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module, k: int=1) -> dict:
+    def discriminator_train_loop(self, input: torch.Tensor, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module, k: int=1) -> dict:
         '''
         Training loop of the discriminator.
         Parameters:
             k: The number of training steps to perform.
-            dataloader: The dataloader to use.
+            input: Input mini-batch from dataloader.
             discriminator_optimizer: The optimizer to use.
             discriminator_loss_fn: The loss function to use.
         Returns:
@@ -356,7 +344,7 @@ class GAN(nn.Module):
         # For each training step of the discriminator
         for _ in range(k):
             # Perform a training step
-            loss = self.discriminator_train_step(dataloader=dataloader, discriminator_optimizer=discriminator_optimizer, discriminator_loss_fn=discriminator_loss_fn)
+            loss = self.discriminator_train_step(input=input, discriminator_optimizer=discriminator_optimizer, discriminator_loss_fn=discriminator_loss_fn)
             running_loss += loss['total']
             running_real_loss += loss['real']
             running_fake_loss += loss['fake']
@@ -366,11 +354,11 @@ class GAN(nn.Module):
         
         return {'total': running_loss, 'real':running_real_loss, 'fake':running_fake_loss}
     
-    def generator_train_step(self, dataloader, generator_optimizer: torch.optim, generator_loss_fn: torch.nn.Module) -> float:
+    def generator_train_step(self, input: torch.Tensor, generator_optimizer: torch.optim, generator_loss_fn: torch.nn.Module) -> float:
         '''
         Each training step of the generator.
         Parameters:
-            dataloader: The dataloader to use.
+            input: Input mini-batch from dataloader.
             generator_optimizer: The optimizer to use.
             generator_loss_fn: The loss function to use.
         Returns:
@@ -382,53 +370,41 @@ class GAN(nn.Module):
         # Set the model to training mode
         self.generator.train()
 
-        # Iteratate over the batches of the training dataset
-        with tqdm(dataloader, desc=f'Training : {self.generator.name}') as pbar:
-            for input, _ in pbar:
+        # Adversarial ground truth
+        valid = Variable(torch.FloatTensor(input.size(0), 1).fill_(1.0), requires_grad=False).to(self.device)
 
-                # Adversarial ground truth
-                valid = Variable(torch.FloatTensor(input.size(0), 1).fill_(1.0), requires_grad=False).to(self.device)
+        # Zero the gradients
+        generator_optimizer.zero_grad()
 
-                # Zero the gradients
-                generator_optimizer.zero_grad()
+        # Sample noise
+        z = Variable(torch.FloatTensor(np.random.normal(0, 1, (input.shape[0], self.z_dim)))).to(self.device)
 
-                # Sample noise
-                z = Variable(torch.FloatTensor(np.random.normal(0, 1, (input.shape[0], self.z_dim)))).to(self.device)
+        # Forward pass to get fake samples
+        fake_sample = self.generator(z)
 
-                # Forward pass to get fake samples
-                fake_sample = self.generator(z)
+        # Forward pass to get validity scores
+        fake_output = self.discriminator(fake_sample)
 
-                # Forward pass to get validity scores
-                fake_output = self.discriminator(fake_sample)
+        # Loss measures generator's ability to fool the discriminator
+        g_loss = generator_loss_fn(fake_output, valid)
 
-                # Loss measures generator's ability to fool the discriminator
-                g_loss = generator_loss_fn(fake_output, valid)
+        # Backward pass
+        g_loss.backward()
 
-                # Backward pass
-                g_loss.backward()
+        # Update the parameters of the generator
+        generator_optimizer.step()
 
-                # Update the parameters of the generator
-                generator_optimizer.step()
-
-                # Update the running loss
-                running_loss += g_loss.item()
-                
-                
-                # Update the progress bar
-                pbar.set_postfix(generator_loss='{:.6f}'.format(running_loss))
-                pbar.update()
-        
-        # Update the average loss
-        running_loss /= len(dataloader.dataset)
+        # Update the running loss
+        running_loss += g_loss.item()
 
         return running_loss
     
-    def generator_train_loop(self, dataloader, generator_optimizer: torch.optim, generator_loss_fn: torch.nn.Module, l: int=1) -> float:
+    def generator_train_loop(self, input, generator_optimizer: torch.optim, generator_loss_fn: torch.nn.Module, l: int=1) -> float:
         '''
         Training loop of the generator.
         Parameters:
             k: The number of training steps to perform.
-            dataloader: The dataloader to use.
+            input: Input mini-batch from dataloader.
             generator_optimizer: The optimizer to use.
             generator_loss_fn: The loss function to use.
         Returns:
@@ -440,7 +416,7 @@ class GAN(nn.Module):
         # For each training step of the generator
         for _ in range(l):
             # Perform a training step
-            running_loss += self.generator_train_step(dataloader=dataloader, generator_optimizer=generator_optimizer, generator_loss_fn=generator_loss_fn)
+            running_loss += self.generator_train_step(input=input, generator_optimizer=generator_optimizer, generator_loss_fn=generator_loss_fn)
         running_loss /= l
         
         return running_loss
@@ -474,15 +450,24 @@ class GAN(nn.Module):
         for epoch in range(epochs):
             print('-' * 50)
             print(f'Starting Epoch {epoch + 1}/{epochs}:')
+            start_time = time.time()
 
-            # Train the discriminator
-            discriminator_loss = self.discriminator_train_loop(k=discriminator_strategy['epochs'], dataloader=dataloader, discriminator_optimizer=discriminator_strategy['optimizer'], discriminator_loss_fn=discriminator_strategy['criterion'])
+            # For each batch in the dataloader
+            with tqdm(dataloader, desc=f'Training : {self.name}') as pbar:
+                for input, _ in pbar:
 
-            # Train the generator
-            generator_loss = self.generator_train_loop(l=generator_strategy['epochs'], dataloader=dataloader, generator_optimizer=generator_strategy['optimizer'], generator_loss_fn=generator_strategy['criterion'])
+                    # Train the discriminator
+                    discriminator_loss = self.discriminator_train_loop(k=discriminator_strategy['epochs'], input=input, discriminator_optimizer=discriminator_strategy['optimizer'], discriminator_loss_fn=discriminator_strategy['criterion'])
 
+                    # Train the generator
+                    generator_loss = self.generator_train_loop(l=generator_strategy['epochs'], input=input, generator_optimizer=generator_strategy['optimizer'], generator_loss_fn=generator_strategy['criterion'])
+
+                    # Update the progress bar
+                    pbar.set_postfix(Losses=f"g_loss: {generator_loss:.4f} - d_loss: {discriminator_loss['total']:.4f}")
+                    pbar.update()
+            
             # Print the losses
-            print(f"Epoch: {epoch + 1} - Generator loss: {generator_loss:.6f} - Discriminator loss: {discriminator_loss['total']:.6f}")
+            print(f"Epoch: {epoch + 1} - Generator loss: {generator_loss:.6f} - Discriminator loss: {discriminator_loss['total']:.6f} - Time Taken: {time.time() - start_time:.2f}")
             # Add the losses to tensorboard
             self.visualize_loss(epoch=epoch, writer=writer, generator_loss=generator_loss, discriminator_loss=discriminator_loss['total'], discriminator_loss_real=discriminator_loss['real'], discriminator_loss_fake=discriminator_loss['fake'])
 
