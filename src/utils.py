@@ -66,3 +66,13 @@ def resize_image(dims: tuple, image: np.ndarray) -> np.ndarray:
         image: (type numpy.ndarray) resized image.
     """
     return image.resize(dims)
+
+def normalize_tensor(tensor: torch.FloatTensor) -> torch.FloatTensor:
+    """
+    Normalize a tensor.
+    Parameters:
+        tensor: (type torch.Tensor) tensor to normalize.
+    Returns:
+        tensor: (type torch.Tensor) normalized tensor.
+    """
+    return tensor / 255.0

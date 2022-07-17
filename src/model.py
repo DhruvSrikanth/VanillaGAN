@@ -12,6 +12,8 @@ from tqdm import tqdm
 import typing
 import warnings
 
+import utils
+
 class Generator(nn.Module):
     def __init__(self, z_dim: int, n_blocks: int, out_shape: tuple, name:str=None) -> None:
         '''
@@ -514,12 +516,12 @@ class GAN(nn.Module):
         
         # Forward pass to get fake sample
         fake_sample = self.generator(z)
-        writer.add_histogram('Inferred distribution', values=fake_sample, global_step=epoch, bins=100)
+        writer.add_histogram('Inferred distribution', values=utils.normalize_tensor(fake_sample), global_step=epoch, bins=100)
 
         # Get real sample from dataloader
         real_sample = next(iter(dataloader))[0]
         real_sample = Variable(torch.FloatTensor(real_sample)).to(self.device)
-        writer.add_histogram('Actual distribution', values=real_sample, global_step=epoch, bins=100)
+        writer.add_histogram('Actual distribution', values=utils.normalize_tensor(real_sample), global_step=epoch, bins=100)
         
     
     def visualize_loss(self, epoch: int, generator_loss: int, discriminator_loss: int, writer: object) -> None:
