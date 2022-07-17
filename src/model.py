@@ -398,6 +398,28 @@ class GAN(nn.Module):
 
         return running_loss
     
+    def generator_train_loop(self, dataloader, generator_optimizer: torch.optim, generator_loss_fn: torch.nn.Module, l: int=1) -> float:
+        '''
+        Training loop of the generator.
+        Parameters:
+            k: The number of training steps to perform.
+            dataloader: The dataloader to use.
+            generator_optimizer: The optimizer to use.
+            generator_loss_fn: The loss function to use.
+        Returns:
+            The loss of the generator.
+        '''
+        # Running loss
+        running_loss = 0.0
+
+        # For each training step of the generator
+        for _ in range(l):
+            # Perform a training step
+            running_loss += self.generator_train_step(dataloader=dataloader, generator_optimizer=generator_optimizer, generator_loss_fn=generator_loss_fn)
+            running_loss /= l
+        
+        return running_loss
+
     def train(self, dataloader, batch_size: int, generator_strategy: dict, discriminator_strategy: dict, epochs: int, sample_interval: int, sample_save_path: str, model_save_path: str, log_path: str, experiment_number: int) -> None:
         '''
         Training loop for the GAN.
@@ -432,7 +454,7 @@ class GAN(nn.Module):
             discriminator_loss = self.discriminator_train_loop(k=discriminator_strategy['epochs'], dataloader=dataloader, discriminator_optimizer=discriminator_strategy['optimizer'], discriminator_loss_fn=discriminator_strategy['criterion'])
 
             # Train the generator
-            generator_loss = self.generator_train_step(dataloader=dataloader, generator_optimizer=generator_strategy['optimizer'], generator_loss_fn=generator_strategy['criterion'])
+            generator_loss = self.generator_train_loop(l=generator_strategy['epochs'], dataloader=dataloader, generator_optimizer=generator_strategy['optimizer'], generator_loss_fn=generator_strategy['criterion'])
 
             # Print the losses
             print(f'Epoch: {epoch + 1} - Generator loss: {generator_loss:.6f} - Discriminator loss: {discriminator_loss:.6f}')

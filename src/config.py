@@ -18,6 +18,7 @@ config = {
     'beta2': 0.999,
     'epochs': 100, 
     'discriminator epochs': 1,
+    'generator epochs': 2,
     # Save parameters
     'sample interval': 1,
     'sample save path': './samples',

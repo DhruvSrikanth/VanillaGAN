@@ -59,6 +59,7 @@ class Experiments():
         generator_stategy = {
             'optimizer': torch.optim.Adam(model.generator.parameters(), lr=self.config['learning rate'], betas=(self.config['beta1'], self.config['beta2'])), 
             'criterion': torch.nn.BCELoss(),
+            'epochs': self.config['generator epochs'],
         }
 
         # Define the strategy for training the discriminator
