@@ -483,7 +483,7 @@ class VanillaGAN(nn.Module):
             self.save_model(save_path=model_save_path, epoch=epoch, generator_loss=generator_loss, discriminator_loss=discriminator_loss)
             print(f'Saved model to {model_save_path}.')
             
-            print('-' * 50)
+            print('-' * 50 + '\n')
         
         # Release the resource
         writer.close()
