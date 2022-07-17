@@ -314,11 +314,14 @@ class GAN(nn.Module):
 
                 # Update the running loss
                 running_loss += d_loss.item()
-                running_loss /= len(dataloader.dataset)
+                
                 
                 # Update the progress bar
                 pbar.set_postfix(discriminator_loss='{:.6f}'.format(running_loss))
                 pbar.update()
+        
+        # Return the average loss
+        running_loss /= len(dataloader.dataset)
 
         return running_loss
     
@@ -340,7 +343,7 @@ class GAN(nn.Module):
         for _ in range(k):
             # Perform a training step
             running_loss += self.discriminator_train_step(dataloader=dataloader, discriminator_optimizer=discriminator_optimizer, discriminator_loss_fn=discriminator_loss_fn)
-            running_loss /= k
+        running_loss /= k
         
         return running_loss
     
@@ -390,11 +393,14 @@ class GAN(nn.Module):
 
                 # Update the running loss
                 running_loss += g_loss.item()
-                running_loss /= len(dataloader.dataset)
+                
                 
                 # Update the progress bar
                 pbar.set_postfix(generator_loss='{:.6f}'.format(running_loss))
                 pbar.update()
+        
+        # Update the average loss
+        running_loss /= len(dataloader.dataset)
 
         return running_loss
     
@@ -416,7 +422,7 @@ class GAN(nn.Module):
         for _ in range(l):
             # Perform a training step
             running_loss += self.generator_train_step(dataloader=dataloader, generator_optimizer=generator_optimizer, generator_loss_fn=generator_loss_fn)
-            running_loss /= l
+        running_loss /= l
         
         return running_loss
 
@@ -497,11 +503,11 @@ class GAN(nn.Module):
         
         # Forward pass to get fake sample
         fake_sample = self.generator(z)
-        save_image(fake_sample.data[:n_images**2], f"{save_path}/generated_samples_epoch_{epoch}_loss_{loss}.png", nrow=n_images, normalize=True)
+        save_image(fake_sample.data[:n_images**2], f"{save_path}/samples_epoch_{epoch}_loss_{loss}.png", nrow=n_images, normalize=True)
 
         # Read in and add to tensorboard
-        img_grid = read_image(f"{save_path}/generated_samples_epoch_{epoch}_loss_{loss}.png", mode=torchvision.io.ImageReadMode.GRAY)
-        writer.add_image(f'sample_epoch_{epoch}', img_grid)
+        img_grid = read_image(f"{save_path}/samples_epoch_{epoch}_loss_{loss}.png", mode=torchvision.io.ImageReadMode.GRAY)
+        writer.add_image(f'Sample - (Epoch {epoch})', img_grid)
     
     def save_model(self, save_path: str, epoch: int, generator_loss: int, discriminator_loss: int) -> None:
         '''
@@ -538,12 +544,12 @@ class GAN(nn.Module):
         
         # Forward pass to get fake sample
         fake_sample = self.generator(z)
-        writer.add_histogram('Inferred distribution', values=utils.normalize_tensor(fake_sample), global_step=epoch, bins=100)
+        writer.add_histogram('Inferred Distribution', values=utils.normalize_tensor(fake_sample), global_step=epoch, bins=256)
 
         # Get real sample from dataloader
         real_sample = next(iter(dataloader))[0]
         real_sample = Variable(torch.FloatTensor(real_sample)).to(self.device)
-        writer.add_histogram('Actual distribution', values=utils.normalize_tensor(real_sample), global_step=epoch, bins=100)
+        writer.add_histogram('Actual Distribution', values=utils.normalize_tensor(real_sample), global_step=epoch, bins=256)
         
     
     def visualize_loss(self, epoch: int, generator_loss: int, discriminator_loss: int, writer: object) -> None:
@@ -557,6 +563,6 @@ class GAN(nn.Module):
         Returns:
             None
         '''
-        writer.add_scalar('Generator loss', generator_loss, epoch)
-        writer.add_scalar('Discriminator loss', discriminator_loss, epoch)
-        writer.add_scalars('experiment_1', {'Generator loss': generator_loss, 'Discriminator loss': discriminator_loss}, epoch)
+        # writer.add_scalar('Generator loss', generator_loss, epoch)
+        # writer.add_scalar('Discriminator loss', discriminator_loss, epoch)
+        writer.add_scalars('Loss Curves', {'Generator loss': generator_loss, 'Discriminator loss': discriminator_loss}, epoch)
