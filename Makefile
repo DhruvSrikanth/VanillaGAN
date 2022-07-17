@@ -27,12 +27,16 @@ LOG_PATH = ./logs
 ## visualize :		Visualize results on tensorboard.
 .PHONY: visualize
 
+## reset :		Reset the environment.
+.PHONY: reset
+
 
 # recipes
 setup: create_env create_temp
 install: install_requirements
 update: update_requirements
 experiments: clean create_temp run_experiments
+reset: clean create_temp
 
 # rules
 create_env:
