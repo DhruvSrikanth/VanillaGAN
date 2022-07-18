@@ -133,7 +133,7 @@ dmypy.json
 .pyre/
 
 # Data Directory
-data/
+./data/
 
 # Model weights
 weights/
