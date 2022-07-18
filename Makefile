@@ -56,7 +56,7 @@ update_requirements:
 
 run_experiments:
 	$(PRINT) "Running experiments..."
-	$(PYTHON) ./src/main.py
+	$(PYTHON) ./main.py
 	$(PRINT) ""
 
 clean:

@@ -6,14 +6,16 @@ from torchvision.utils import save_image
 from torchvision.io import read_image
 from torch.utils.tensorboard import SummaryWriter
 
+from package.expvanillagan.src.utils import transforms
+
+from ..utils import ImageTransforms
+
 import numpy as np
 from tqdm import tqdm
 import time
 
 import typing
 import warnings
-
-import utils
 
 class Generator(nn.Module):
     def __init__(self, z_dim: int, n_blocks: int, out_shape: tuple, name:str=None) -> None:
@@ -552,6 +554,9 @@ class VanillaGAN(nn.Module):
         Returns:
             None
         '''
+        # Get the image transformations
+        transforms = ImageTransforms()
+
         # Sample noise
         z = self.sample_noise(batch_size=batch_size)
 
@@ -560,12 +565,12 @@ class VanillaGAN(nn.Module):
         
         # Forward pass to get fake sample
         fake_sample = self.generator(z)
-        writer.add_histogram('Inferred Distribution', values=utils.normalize_tensor(fake_sample), global_step=epoch, bins=256)
+        writer.add_histogram('Inferred Distribution', values=transforms.normalize_tensor(fake_sample), global_step=epoch, bins=256)
 
         # Get real sample from dataloader
         real_sample = next(iter(dataloader))[0]
         real_sample = Variable(torch.FloatTensor(real_sample)).to(self.device)
-        writer.add_histogram('Actual Distribution', values=utils.normalize_tensor(real_sample), global_step=epoch, bins=256)
+        writer.add_histogram('Actual Distribution', values=transforms.normalize_tensor(real_sample), global_step=epoch, bins=256)
         
     
     def visualize_loss(self, epoch: int, generator_loss: float, discriminator_loss: float, discriminator_loss_real: float, discriminator_loss_fake: float, writer: object) -> None:

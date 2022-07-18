@@ -3,6 +3,7 @@ cachetools==5.2.0
 certifi==2022.6.15
 charset-normalizer==2.1.0
 cycler==0.11.0
+-e git+https://github.com/DhruvSrikanth/MNIST-GAN.git@5dc2f258f4996021b218dccc83c79ed21ff336cf#egg=expvanillagan&subdirectory=package
 fonttools==4.34.4
 google-auth==2.9.1
 google-auth-oauthlib==0.4.6
@@ -35,6 +36,7 @@ torch==1.13.0.dev20220715
 torchaudio==0.14.0.dev20220603
 torchvision==0.14.0.dev20220715
 tqdm==4.64.0
+typing==3.7.4.3
 typing-extensions==4.3.0
 urllib3==1.26.10
 Werkzeug==2.1.2
