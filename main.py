@@ -1,5 +1,5 @@
 from config import config
-import expvanillagan
+from .src import Experiments, DirectoryStructure
 
 def main() -> None:
     '''
@@ -8,11 +8,11 @@ def main() -> None:
         None
     '''
     # Create directory structure for the experiment
-    create_directory_structure = expvanillagan.DirectoryStructure(home_dir=config['device']['home directory'])
+    create_directory_structure = DirectoryStructure(home_dir=config['device']['home directory'])
     create_directory_structure.create_directory_structure()
 
     # Create the experiments
-    experiments = expvanillagan.Experiments(config=config)
+    experiments = Experiments(config=config)
 
     # Train the model
     experiments.train(verbose=False)
