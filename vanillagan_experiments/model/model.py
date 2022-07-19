@@ -440,11 +440,9 @@ class VanillaGAN(nn.Module):
         # Log results to tensorboard
         writer = SummaryWriter(f"{log_path}/experiment_{experiment_number}")
         
+        
         # Add models to tensorboard
-        # generator_input = Variable(torch.FloatTensor(np.random.normal(0, 1, (batch_size, self.z_dim)))).to(self.device)
-        # writer.add_graph(self.generator, generator_input)
-        # discriminator_input = Variable(torch.FloatTensor(np.random.normal(0, 1, tuple([batch_size] + list(self.out_shape))))).to(self.device)
-        # writer.add_graph(self.discriminator, discriminator_input)
+        # self.visualize_model(batch_size=batch_size, writer=writer)
         
         # Training loop for the GAN
         for epoch in range(epochs):
@@ -541,6 +539,7 @@ class VanillaGAN(nn.Module):
         # Save the discriminator
         torch.save(self.discriminator.state_dict(), f"{save_path}/discriminator_epoch_{epoch}_loss_{discriminator_loss}.pt")
     
+
     def visualize_distribution(self, epoch: int, batch_size: int, dataloader: object, writer: object) -> None:
         '''
         Visualize the distribution of real and inferred data.
@@ -569,7 +568,22 @@ class VanillaGAN(nn.Module):
         real_sample = next(iter(dataloader))[0]
         real_sample = Variable(torch.FloatTensor(real_sample)).to(self.device)
         writer.add_histogram('Actual Distribution', values=transforms.normalize_tensor(real_sample), global_step=epoch, bins=256)
-        
+    
+    def visualize_model(self, batch_size: int, writer):
+        '''
+        Visualize the model.
+        Parameters:
+            batch_size: The batch size to use.
+            writer: The tensorboard writer to use.
+        Returns:
+            None
+        '''
+        generator_input = self.sample_noise(batch_size=batch_size)
+        writer.add_graph(self.generator, generator_input)
+
+        self.generator.eval()
+        discriminator_input = self.generator(generator_input)
+        writer.add_graph(self.discriminator, discriminator_input)
     
     def visualize_loss(self, epoch: int, generator_loss: float, discriminator_loss: float, discriminator_loss_real: float, discriminator_loss_fake: float, writer: object) -> None:
         '''

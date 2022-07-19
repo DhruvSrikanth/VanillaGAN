@@ -1,5 +1,5 @@
 from config import config
-from gan_experiments import Experiments, DirectoryStructure
+from vanillagan_experiments import Experiments, DirectoryStructure
 
 def example() -> None:
     '''
