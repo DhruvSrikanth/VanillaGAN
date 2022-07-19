@@ -30,11 +30,12 @@ class Experiments():
             'test': get_dataloader(type='test', batch_size=self.config.data_config['batch size'], num_workers=self.config.data_config['num workers'], transform=transform, samples=self.config.data_config['test samples']),
         }
 
-    def train(self, verbose: bool=True) -> None:
+    def train(self, verbose: bool=True, checkpoint: dict=None) -> None:
         '''
         Train the model.
         Parameters:
             verbose: Whether to print the progress.
+            checkpoint: The checkpoint to load the models from.
         Returns:
             None
         '''
@@ -49,6 +50,11 @@ class Experiments():
 
         # Create the model
         model = VanillaGAN(z_dim=self.config.hyperparameters['latent dimension'], g_blocks=self.config.generator_config['generator blocks'], d_blocks=self.config.discriminator_config['discriminator blocks'], out_shape=self.config.data_config['image shape'], device=device, name="Vanilla GAN")
+        if checkpoint is not None:
+            if 'generator' in checkpoint and 'discriminator' in checkpoint:
+                model.load_model(generator_model_path=checkpoint['generator'], discriminator_model_path=checkpoint['discriminator'])
+            else:
+                raise ValueError("The checkpoint must contain the generator and discriminator models paths.")
         if verbose:
             print(f"Given below is the model architecture: \n\t{model.generator}\n\t{model.discriminator}\n")
 

@@ -2,7 +2,7 @@
 PYTHON = python
 PIP = pip
 REMOVE = rm -rf
-CREATE = mkdir
+CREATE = mkdir -p
 PRINT = @echo
 
 # Paths
@@ -35,7 +35,7 @@ LOG_PATH = ./logs
 setup: create_env create_temp
 install: install_requirements
 update: update_requirements
-experiments: clean create_temp run_experiments
+experiments: create_temp run_experiments
 reset: clean create_temp
 
 # rules

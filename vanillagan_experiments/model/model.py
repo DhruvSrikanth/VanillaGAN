@@ -535,10 +535,26 @@ class VanillaGAN(nn.Module):
             None
         '''
         # Save the generator
-        torch.save(self.generator.state_dict(), f"{save_path}/generator_epoch_{epoch}_loss_{generator_loss}.pt")
+        torch.save(self.generator.state_dict(), f"{save_path}/generator_epoch_{epoch}_loss_2{round(generator_loss, 4)}.pt")
         # Save the discriminator
-        torch.save(self.discriminator.state_dict(), f"{save_path}/discriminator_epoch_{epoch}_loss_{discriminator_loss}.pt")
+        torch.save(self.discriminator.state_dict(), f"{save_path}/discriminator_epoch_{epoch}_loss_{round(discriminator_loss['total'], 4)}.pt")
     
+    def load_model(self, generator_model_path: str, discriminator_model_path: str) -> None:
+        '''
+        Load the model.
+        Parameters:
+            generator_model_path: The path to the generator model.
+            discriminator_model_path: The path to the discriminator model.
+        Returns:
+            None
+        '''
+        # Load the generator
+        self.generator.load_state_dict(torch.load(generator_model_path))
+        self.generator.to(self.device)
+
+        # Load the discriminator
+        self.discriminator.load_state_dict(torch.load(discriminator_model_path))
+        self.discriminator.to(self.device)
 
     def visualize_distribution(self, epoch: int, batch_size: int, dataloader: object, writer: object) -> None:
         '''

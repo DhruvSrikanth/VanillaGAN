@@ -47,13 +47,17 @@ make experiments
 make visualize
 ```
 
-## Example For Using API - 
+## Example For Using API
+
+ - Training from scratch - 
 
 ```python
-from config import config
-from gan_experiments import Experiments, DirectoryStructure
-
-def example() -> None:
+def train_from_scratch_example() -> None:
+    '''
+    Train a model from scratch.
+    Returns:
+        None
+    '''
     # Create directory structure for the experiment
     create_directory_structure = DirectoryStructure(home_dir=config['device']['home directory'])
     create_directory_structure.create_directory_structure()
@@ -62,10 +66,28 @@ def example() -> None:
     experiments = Experiments(config=config)
 
     # Train the model
-    experiments.train(verbose=True)
-    
-if __name__ == '__main__':
-    example()
+    experiments.train(verbose=True, checkpoint=None)
+```
+
+- Training from checkpoint - 
+
+```python
+def train_from_checkpoint_example() -> None:
+    '''
+    Train a model from a checkpoint.
+    Returns:
+        None
+    '''
+    # Create the experiments
+    experiments = Experiments(config=config)
+
+    checkpoint = {
+        'generator': './weights/generator_epoch_0_loss_0.pt',
+        'discriminator': './weights/discriminator_epoch_0_loss_0.pt'
+    }
+
+    # Train the model
+    experiments.train(verbose=True, checkpoint=checkpoint)
 ```
 
 ## References:
