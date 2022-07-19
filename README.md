@@ -60,7 +60,7 @@ def example() -> None:
     experiments = Experiments(config=config)
 
     # Train the model
-    experiments.train(verbose=False)
+    experiments.train(verbose=True)
     
 if __name__ == '__main__':
     example()
