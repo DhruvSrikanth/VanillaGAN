@@ -1,5 +1,7 @@
 # Vanilla GAN Experiments
 
+Simulate experiments with a Vanilla GAN architecture.
+
 ## Setting up the Vanilla GAN Experiments package
 
 - Setup the environment - 
