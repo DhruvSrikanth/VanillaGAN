@@ -47,7 +47,7 @@ make visualize
 
 ## Example For Using API - 
 
-```
+```python
 from config import config
 from gan_experiments import Experiments, DirectoryStructure
 
