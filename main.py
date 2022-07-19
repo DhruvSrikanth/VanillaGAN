@@ -1,7 +1,7 @@
 from config import config
-from .src import Experiments, DirectoryStructure
+from gan_experiments import Experiments, DirectoryStructure
 
-def main() -> None:
+def example() -> None:
     '''
     Main function to run experiments.
     Returns:
@@ -18,4 +18,4 @@ def main() -> None:
     experiments.train(verbose=False)
     
 if __name__ == '__main__':
-    main()
+    example()
