@@ -1,4 +1,4 @@
-from .data import get_dataloader
+from .dataloader import get_dataloader
 from .model import VanillaGAN
 from .utils import Config, ImageTransforms
 
