@@ -6,7 +6,7 @@ Simulate experiments with a Vanilla GAN architecture.
 
 - Setup the environment - 
 ```
-make install
+make setup
 ```
 
 - Allow the `.envrc` to activate vitual environment - 
