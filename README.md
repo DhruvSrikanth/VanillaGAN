@@ -65,3 +65,19 @@ def example() -> None:
 if __name__ == '__main__':
     example()
 ```
+
+## References:
+
+The *Generate Adversarial Network (GAN)* training algorithm can be found [here](https://arxiv.org/abs/1406.2661) - 
+```
+@misc{https://doi.org/10.48550/arxiv.1406.2661,
+  doi = {10.48550/ARXIV.1406.2661},
+  url = {https://arxiv.org/abs/1406.2661},
+  author = {Goodfellow, Ian J. and Pouget-Abadie, Jean and Mirza, Mehdi and Xu, Bing and Warde-Farley, David and Ozair, Sherjil and Courville, Aaron and Bengio, Yoshua},
+  keywords = {Machine Learning (stat.ML), Machine Learning (cs.LG), FOS: Computer and information sciences, FOS: Computer and information sciences},
+  title = {Generative Adversarial Networks},
+  publisher = {arXiv},
+  year = {2014},
+  copyright = {arXiv.org perpetual, non-exclusive license}
+}
+```
