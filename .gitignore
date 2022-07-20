@@ -141,3 +141,6 @@ weights/
 # Log directory
 logs
 logs/
+
+# Mac files
+.DS_Store
