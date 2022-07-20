@@ -262,7 +262,7 @@ class VanillaGAN(nn.Module):
         # Initialize discriminator
         self.discriminator = Discriminator(in_shape=self.out_shape, n_blocks=self.d_blocks, name='Discriminator').to(self.device)
     
-    def discriminator_train_step(self, input: torch.Tensor, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module) -> dict:
+    def discriminator_train_step(self, input: dict, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module) -> dict:
         '''
         Each training step of the discriminator.
         Parameters:
@@ -284,18 +284,20 @@ class VanillaGAN(nn.Module):
         # Set the model to training mode
         self.discriminator.train()
 
+        real_samples = input['real']['images']
+
         # Move data to device and configure input
-        real_samples = Variable(input.type(torch.FloatTensor)).to(self.device)
+        real_samples = Variable(real_samples.type(torch.FloatTensor)).to(self.device)
         
         # Adversarial ground truths
-        valid = Variable(torch.FloatTensor(input.size(0), 1).fill_(1.0), requires_grad=False).to(self.device)
-        fake = Variable(torch.FloatTensor(input.size(0), 1).fill_(0.0), requires_grad=False).to(self.device)
+        valid = Variable(torch.FloatTensor(input['real']['images'].size(0), 1).fill_(1.0), requires_grad=False).to(self.device)
+        fake = Variable(torch.FloatTensor(input['real']['images'].size(0), 1).fill_(0.0), requires_grad=False).to(self.device)
 
         # Zero the gradients
         discriminator_optimizer.zero_grad()
 
         # Sample noise
-        z = self.sample_noise(input.size(0))
+        z = input['noise']['images']
 
         # Forward pass through generator to get fake samples
         fake_sample = self.generator(z)
@@ -322,7 +324,7 @@ class VanillaGAN(nn.Module):
 
         return {'total': running_loss, 'real':running_real_loss, 'fake':running_fake_loss}
     
-    def discriminator_train_loop(self, input: torch.Tensor, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module, k: int=1) -> dict:
+    def discriminator_train_loop(self, input: dict, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module, k: int=1) -> dict:
         '''
         Training loop of the discriminator.
         Parameters:
@@ -354,7 +356,7 @@ class VanillaGAN(nn.Module):
         
         return {'total': running_loss, 'real':running_real_loss, 'fake':running_fake_loss}
     
-    def generator_train_step(self, input: torch.Tensor, generator_optimizer: torch.optim, generator_loss_fn: torch.nn.Module) -> float:
+    def generator_train_step(self, input: dict, generator_optimizer: torch.optim, generator_loss_fn: torch.nn.Module) -> float:
         '''
         Each training step of the generator.
         Parameters:
@@ -371,13 +373,13 @@ class VanillaGAN(nn.Module):
         self.generator.train()
 
         # Adversarial ground truth
-        valid = Variable(torch.FloatTensor(input.size(0), 1).fill_(1.0), requires_grad=False).to(self.device)
+        valid = Variable(torch.FloatTensor(input['real']['images'].size(0), 1).fill_(1.0), requires_grad=False).to(self.device)
 
         # Zero the gradients
         generator_optimizer.zero_grad()
 
         # Sample noise
-        z = self.sample_noise(input.size(0))
+        z = input['noise']['images']
 
         # Forward pass to get fake samples
         fake_sample = self.generator(z)
@@ -399,7 +401,7 @@ class VanillaGAN(nn.Module):
 
         return running_loss
     
-    def generator_train_loop(self, input, generator_optimizer: torch.optim, generator_loss_fn: torch.nn.Module, l: int=1) -> float:
+    def generator_train_loop(self, input: dict, generator_optimizer: torch.optim, generator_loss_fn: torch.nn.Module, l: int=1) -> float:
         '''
         Training loop of the generator.
         Parameters:
@@ -452,7 +454,17 @@ class VanillaGAN(nn.Module):
 
             # For each batch in the dataloader
             with tqdm(dataloader, desc=f'Training : {self.name}') as pbar:
-                for input, _ in pbar:
+                for imgs, _ in pbar:
+                    # Move data to device and configure input
+                    real_samples = Variable(imgs.type(torch.FloatTensor)).to(self.device)
+                    input = {
+                        'real': {
+                            'images' : real_samples
+                        }, 
+                        'noise': {
+                            'images' : self.sample_noise(imgs.size(0))  
+                        }
+                    }
 
                     # Train the discriminator
                     discriminator_loss = self.discriminator_train_loop(k=discriminator_strategy['epochs'], input=input, discriminator_optimizer=discriminator_strategy['optimizer'], discriminator_loss_fn=discriminator_strategy['criterion'])
