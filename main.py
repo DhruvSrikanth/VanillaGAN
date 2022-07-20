@@ -27,8 +27,9 @@ def train_from_checkpoint_example() -> None:
     experiments = Experiments(config=config)
 
     checkpoint = {
-        'generator': './weights/generator_epoch_1_loss_22.0718.pt',
-        'discriminator': './weights/discriminator_epoch_1_loss_0.1685.pt'
+        'generator': './weights/generator_epoch_25_loss_26.942.pt',
+        'discriminator': './weights/discriminator_epoch_25_loss_0.0009.pt', 
+        'epoch': 25,
     }
 
     # Train the model

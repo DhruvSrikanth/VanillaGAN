@@ -423,7 +423,7 @@ class VanillaGAN(nn.Module):
         
         return running_loss
 
-    def train(self, dataloader, batch_size: int, generator_strategy: dict, discriminator_strategy: dict, epochs: int, sample_interval: int, sample_save_path: str, model_save_path: str, log_path: str, experiment_number: int) -> None:
+    def train(self, dataloader, batch_size: int, generator_strategy: dict, discriminator_strategy: dict, epochs: int, starting_epoch :int, sample_interval: int, sample_save_path: str, model_save_path: str, log_path: str, experiment_number: int) -> None:
         '''
         Training loop for the GAN.
         Parameters:
@@ -431,6 +431,7 @@ class VanillaGAN(nn.Module):
             generator_strategy: The strategy to use for the generator (Must include 'optimizer' and 'criterion' keys).
             discriminator_strategy: The strategy to use for the discriminator (Must include 'optimizer', 'criterion' and 'discriminator_epochs' keys).
             epochs: The number of epochs to train for.
+            starting_epoch: The epoch to start training from.
             sample_interval: The number of epochs between each sample generation to save.
             sample_save_path: The path to save the samples to.
             model_save_path: The path to save the model to.
@@ -447,7 +448,7 @@ class VanillaGAN(nn.Module):
         # self.visualize_model(batch_size=batch_size, writer=writer)
         
         # Training loop for the GAN
-        for epoch in range(epochs):
+        for epoch in range(starting_epoch, epochs):
             print('-' * 50)
             print(f'Starting Epoch {epoch + 1}/{epochs}:')
             start_time = time.time()

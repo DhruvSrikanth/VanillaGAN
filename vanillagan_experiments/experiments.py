@@ -50,8 +50,10 @@ class Experiments():
 
         # Create the model
         model = VanillaGAN(z_dim=self.config.hyperparameters['latent dimension'], g_blocks=self.config.generator_config['generator blocks'], d_blocks=self.config.discriminator_config['discriminator blocks'], out_shape=self.config.data_config['image shape'], device=device, name="Vanilla GAN")
+        starting_epoch = 0
         if checkpoint is not None:
-            if 'generator' in checkpoint and 'discriminator' in checkpoint:
+            if 'generator' in checkpoint and 'discriminator' in checkpoint and 'epoch' in checkpoint:
+                starting_epoch = checkpoint['epoch'] + 1
                 model.load_model(generator_model_path=checkpoint['generator'], discriminator_model_path=checkpoint['discriminator'])
             else:
                 raise ValueError("The checkpoint must contain the generator and discriminator models paths.")
@@ -79,5 +81,5 @@ class Experiments():
 
         
         # Train the model
-        model.train(dataloader=self.dataloaders['train'], batch_size=self.config.data_config['batch size'], generator_strategy=generator_stategy, discriminator_strategy=discriminator_strategy, epochs=self.config.hyperparameters['epochs'], sample_interval=self.config.save_config['sample interval'], sample_save_path=self.config.save_config['sample save path'], model_save_path=self.config.save_config['model save path'], log_path=self.config.log_config['log path'], experiment_number=self.config.log_config['experiment number'])
+        model.train(dataloader=self.dataloaders['train'], batch_size=self.config.data_config['batch size'], generator_strategy=generator_stategy, discriminator_strategy=discriminator_strategy, epochs=self.config.hyperparameters['epochs'], starting_epoch=starting_epoch, sample_interval=self.config.save_config['sample interval'], sample_save_path=self.config.save_config['sample save path'], model_save_path=self.config.save_config['model save path'], log_path=self.config.log_config['log path'], experiment_number=self.config.log_config['experiment number'])
         print(f"Model trained:\n{'-'*50}\n")
