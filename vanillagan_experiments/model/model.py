@@ -284,43 +284,36 @@ class VanillaGAN(nn.Module):
         # Set the model to training mode
         self.discriminator.train()
 
-        real_samples = input['real']['images']
-
-        # Move data to device and configure input
-        real_samples = Variable(real_samples.type(torch.FloatTensor)).to(self.device)
-        
-        # Adversarial ground truths
-        valid = Variable(torch.FloatTensor(input['real']['images'].size(0), 1).fill_(1.0), requires_grad=False).to(self.device)
-        fake = Variable(torch.FloatTensor(input['real']['images'].size(0), 1).fill_(0.0), requires_grad=False).to(self.device)
-
         # Zero the gradients
         discriminator_optimizer.zero_grad()
 
-        # Sample noise
-        z = input['noise']['images']
-
-        # Forward pass through generator to get fake samples
-        fake_sample = self.generator(z)
-
+        # Get real samples
+        real_samples = input['real']['images'] 
+        # Adversarial ground truths
+        valid = Variable(torch.FloatTensor(input['real']['images'].size(0), 1).fill_(1.0), requires_grad=False).to(self.device)
         # Forward pass to get validity scores of real and fake samples
         real_output = self.discriminator(real_samples)
-        fake_output = self.discriminator(fake_sample.detach())
-
         # Compute loss: discriminator's ability to classify real from generated samples
         real_loss = discriminator_loss_fn(real_output, valid)
+        running_real_loss = real_loss.item()        
+
+        # Sample noise
+        z = input['noise']['images']
+        fake = Variable(torch.FloatTensor(input['real']['images'].size(0), 1).fill_(0.0), requires_grad=False).to(self.device)
+        # Forward pass through generator to get fake samples
+        fake_samples = self.generator(z)
+        # Get the validity scores of the fake samples 
+        fake_output = self.discriminator(fake_samples.detach())
+        # Compute loss: discriminator's ability to classify real from generated samples
         fake_loss = discriminator_loss_fn(fake_output, fake)
+        running_fake_loss = fake_loss.item()
+
         d_loss = (real_loss + fake_loss) / 2
-
-        # Backward pass
         d_loss.backward()
-
         # Update the parameters of the discriminator
         discriminator_optimizer.step()
-
         # Update the running loss
         running_loss = d_loss.item()
-        running_real_loss = real_loss.item()
-        running_fake_loss = fake_loss.item()
 
         return {'total': running_loss, 'real':running_real_loss, 'fake':running_fake_loss}
     
@@ -372,20 +365,20 @@ class VanillaGAN(nn.Module):
         # Set the model to training mode
         self.generator.train()
 
-        # Adversarial ground truth
-        valid = Variable(torch.FloatTensor(input['real']['images'].size(0), 1).fill_(1.0), requires_grad=False).to(self.device)
-
         # Zero the gradients
         generator_optimizer.zero_grad()
+
+        # Adversarial ground truth
+        valid = Variable(torch.FloatTensor(input['real']['images'].size(0), 1).fill_(1.0), requires_grad=False).to(self.device)
 
         # Sample noise
         z = input['noise']['images']
 
         # Forward pass to get fake samples
-        fake_sample = self.generator(z)
+        fake_samples = self.generator(z)
 
         # Forward pass to get validity scores
-        fake_output = self.discriminator(fake_sample)
+        fake_output = self.discriminator(fake_samples.detach())
 
         # Loss measures generator's ability to fool the discriminator
         g_loss = generator_loss_fn(fake_output, valid)
@@ -470,6 +463,9 @@ class VanillaGAN(nn.Module):
                     # Train the discriminator
                     discriminator_loss = self.discriminator_train_loop(k=discriminator_strategy['epochs'], input=input, discriminator_optimizer=discriminator_strategy['optimizer'], discriminator_loss_fn=discriminator_strategy['criterion'])
 
+                    # Provide different noise to the generator
+                    input['noise']['images'] = self.sample_noise(imgs.size(0))
+                    
                     # Train the generator
                     generator_loss = self.generator_train_loop(l=generator_strategy['epochs'], input=input, generator_optimizer=generator_strategy['optimizer'], generator_loss_fn=generator_strategy['criterion'])
 

@@ -23,7 +23,7 @@ config = {
         'learning rate': 0.0002, 
         'beta1': 0.5,
         'beta2': 0.999,
-        'epochs': 100, 
+        'epochs': 200, 
         'discriminator epochs': 1,
         'generator epochs': 1,
     }, 

@@ -1,3 +1,4 @@
+import os
 from config import config
 from vanillagan_experiments import Experiments, DirectoryStructure
 
@@ -26,10 +27,15 @@ def train_from_checkpoint_example() -> None:
     # Create the experiments
     experiments = Experiments(config=config)
 
+    latest_models = os.listdir(config['save']['model save path'])
+    latest_models.sort(key=lambda x: int(x.split('_')[2]))
+    latest_generator = latest_models[-2]
+    latest_discriminator = latest_models[-1]
+
     checkpoint = {
-        'generator': './weights/generator_epoch_25_loss_26.942.pt',
-        'discriminator': './weights/discriminator_epoch_25_loss_0.0009.pt', 
-        'epoch': 25,
+        'generator': config['device']['home directory'] + config['save']['model save path'] + '/' + latest_generator,
+        'discriminator': config['device']['home directory'] + config['save']['model save path'] + '/' + latest_discriminator, 
+        'epoch': int(latest_generator.split('_')[2]),
     }
 
     # Train the model
