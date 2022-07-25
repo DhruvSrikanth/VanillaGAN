@@ -1,6 +1,6 @@
-# Vanilla GAN Experiments
+# Vanilla GAN Experiments Package
 
-Simulate experiments with a Vanilla GAN architecture.
+Simulate experiments with a Vanilla GAN architecture package.
 
 ## Setting up the Vanilla GAN Experiments package
 
