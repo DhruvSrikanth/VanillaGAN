@@ -290,7 +290,7 @@ class VanillaGAN(nn.Module):
         # Get real samples
         real_samples = input['real']['images'] 
         # Adversarial ground truths
-        valid = Variable(torch.FloatTensor(input['real']['images'].size(0), 1).fill_(1.0), requires_grad=False).to(self.device)
+        valid = input['validity']['real']
         # Forward pass to get validity scores of real and fake samples
         real_output = self.discriminator(real_samples)
         # Compute loss: discriminator's ability to classify real from generated samples
@@ -299,7 +299,7 @@ class VanillaGAN(nn.Module):
 
         # Sample noise
         z = input['noise']['images']
-        fake = Variable(torch.FloatTensor(input['real']['images'].size(0), 1).fill_(0.0), requires_grad=False).to(self.device)
+        fake = input['validity']['fake']
         # Forward pass through generator to get fake samples
         fake_samples = self.generator(z)
         # Get the validity scores of the fake samples 
@@ -369,7 +369,7 @@ class VanillaGAN(nn.Module):
         generator_optimizer.zero_grad()
 
         # Adversarial ground truth
-        valid = Variable(torch.FloatTensor(input['real']['images'].size(0), 1).fill_(1.0), requires_grad=False).to(self.device)
+        valid = input['validity']['real']
 
         # Sample noise
         z = input['noise']['images']
@@ -453,10 +453,16 @@ class VanillaGAN(nn.Module):
                     real_samples = Variable(imgs.type(torch.FloatTensor)).to(self.device)
                     input = {
                         'real': {
-                            'images' : real_samples
+                            'images' : real_samples, 
+                            'labels' : None
                         }, 
                         'noise': {
-                            'images' : self.sample_noise(imgs.size(0))  
+                            'images' : self.sample_noise(batch_size=batch_size),  
+                            'labels' : None
+                        }, 
+                        'validity' : {
+                            'real' : self.get_validity_labels(batch_size=batch_size, type='real'), 
+                            'fake' : self.get_validity_labels(batch_size=batch_size, type='fake')
                         }
                     }
 
@@ -464,7 +470,7 @@ class VanillaGAN(nn.Module):
                     discriminator_loss = self.discriminator_train_loop(k=discriminator_strategy['epochs'], input=input, discriminator_optimizer=discriminator_strategy['optimizer'], discriminator_loss_fn=discriminator_strategy['criterion'])
 
                     # Provide different noise to the generator
-                    input['noise']['images'] = self.sample_noise(imgs.size(0))
+                    input['noise']['images'] = self.sample_noise(batch_size=batch_size)
                     
                     # Train the generator
                     generator_loss = self.generator_train_loop(l=generator_strategy['epochs'], input=input, generator_optimizer=generator_strategy['optimizer'], generator_loss_fn=generator_strategy['criterion'])
@@ -495,6 +501,23 @@ class VanillaGAN(nn.Module):
         # Release the resource
         writer.close()
     
+    def get_validity_labels(self, batch_size: int, type: str) -> torch.Tensor:
+        '''
+        Get the labels for the validity of the samples.
+        Parameters:
+            batch_size: The batch size.
+            type: The type of the samples. Valid types are 'real' and 'fake'.
+        Returns:
+            The labels for the validity of the samples.
+        '''
+        # Get the labels for the validity of the samples
+        if type == 'real':
+            return Variable(torch.FloatTensor(batch_size, 1).fill_(1.0), requires_grad=False).to(self.device)
+        elif type == 'fake':
+            return Variable(torch.FloatTensor(batch_size, 1).fill_(0.0), requires_grad=False).to(self.device)
+        else:
+            raise ValueError(f'Invalid type: {type}, Valid types include: real, fake.')
+
     def sample_noise(self, batch_size: int) -> torch.Tensor:
         '''
         Sample noise tensor from a normal distribution.
