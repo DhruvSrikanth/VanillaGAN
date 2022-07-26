@@ -451,6 +451,9 @@ class VanillaGAN(nn.Module):
                 for imgs, _ in pbar:
                     # Move data to device and configure input
                     real_samples = Variable(imgs.type(torch.FloatTensor)).to(self.device)
+                    # Recompute batch size for current mini batch
+                    batch_size = real_samples.size(0)
+
                     input = {
                         'real': {
                             'images' : real_samples, 
@@ -553,7 +556,7 @@ class VanillaGAN(nn.Module):
 
         # Read in and add to tensorboard
         img_grid = read_image(f"{save_path}/samples_epoch_{epoch}_loss_{loss}.png", mode=torchvision.io.ImageReadMode.GRAY)
-        writer.add_image(f'Sample - (Epoch {epoch})', img_grid)
+        writer.add_image(f'Samples', img_grid, global_step=epoch)
     
     def save_model(self, save_path: str, epoch: int, generator_loss: int, discriminator_loss: int) -> None:
         '''
