@@ -539,10 +539,10 @@ class VanillaGAN(nn.Module):
         # z = Variable(torch.FloatTensor(np.random.normal(0, 1, (batch_size, self.z_dim)))).to(self.device)
 
         # Sample noise from a multivariate distribution
-        # z = Variable(torch.FloatTensor(np.random.multivariate_normal([0]*self.z_dim, np.eye(self.z_dim), batch_size)).to(self.device))
+        z = Variable(torch.FloatTensor(np.random.multivariate_normal([0]*self.z_dim, np.eye(self.z_dim), batch_size)).to(self.device))
 
         # sample noise from a uniform distribution
-        z = Variable(torch.FloatTensor(np.random.uniform(-1, 1, (batch_size, self.z_dim)))).to(self.device)
+        # z = Variable(torch.FloatTensor(np.random.uniform(-1, 1, (batch_size, self.z_dim)))).to(self.device)
 
         return z
 
