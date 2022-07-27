@@ -56,13 +56,13 @@ class Generator(nn.Module):
 
             if regularize:
                 # Regularization layer
-                layers.append(nn.Dropout(p=0.3))
+                layers.append(nn.Dropout(p=0.5))
             
             return layers
         
         # Define input block
         self.in_block = nn.ModuleDict({
-            'in_block': nn.Sequential(*block(in_features=self.z_dim, out_features=128, normalize=False, regularize=False))
+            'in_block': nn.Sequential(*block(in_features=self.z_dim, out_features= 2 * self.z_dim, normalize=False, regularize=False))
         })
 
         # Define intermediate blocks
@@ -70,7 +70,7 @@ class Generator(nn.Module):
         in_dim = 2 * self.z_dim
         for i in range(self.n_blocks):
             out_dim = 2 * in_dim
-            self.inter_blocks[f'inter_block_{i+1}'] = nn.Sequential(*block(in_features=in_dim, out_features=out_dim, normalize=True, regularize=False))
+            self.inter_blocks[f'inter_block_{i+1}'] = nn.Sequential(*block(in_features=in_dim, out_features=out_dim, normalize=True, regularize=True))
             in_dim = out_dim
         
         # Define output block
@@ -162,7 +162,7 @@ class Discriminator(nn.Module):
 
             if regularize:
                 # Regularization layer
-                layers.append(nn.Dropout(p=0.3))
+                layers.append(nn.Dropout(p=0.5))
             
             return layers
         
@@ -295,7 +295,16 @@ class VanillaGAN(nn.Module):
 
         # Compute real loss
         real_loss = discriminator_loss_fn(generated_labels, valid_labels)
-        running_real_loss = real_loss.item()        
+        running_real_loss = real_loss.item()
+
+        # Backpropagate real loss
+        real_loss.backward()
+
+        # Update discriminator's weights
+        discriminator_optimizer.step()
+
+        # Zero the gradients
+        discriminator_optimizer.zero_grad() 
 
         # Sample noise
         noise_tensor = self.sample_noise(batch_size=batch_size)
@@ -313,11 +322,17 @@ class VanillaGAN(nn.Module):
         fake_loss = discriminator_loss_fn(fake_output, fake_labels)
         running_fake_loss = fake_loss.item()
 
+        # Backpropagate fake loss
+        fake_loss.backward()
+
+        # Update discriminator's weights
+        discriminator_optimizer.step()
+
         d_loss = (real_loss + fake_loss) / 2
-        d_loss.backward()
+        # d_loss.backward()
         
         # Update the parameters of the discriminator
-        discriminator_optimizer.step()
+        # discriminator_optimizer.step()
 
         # Update the running loss
         running_loss = d_loss.item()
