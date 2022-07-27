@@ -16,7 +16,7 @@ config = {
          'generator blocks' : 3, 
     }, 
     'discriminator' : {
-        'discriminator blocks' : 2, 
+        'discriminator blocks' : 3, 
     }, 
     'hyperparameters' : {
         'latent dimension': 64,

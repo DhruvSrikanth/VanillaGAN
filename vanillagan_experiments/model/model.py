@@ -262,11 +262,12 @@ class VanillaGAN(nn.Module):
         # Initialize discriminator
         self.discriminator = Discriminator(in_shape=self.out_shape, n_blocks=self.d_blocks, name='Discriminator').to(self.device)
     
-    def discriminator_train_step(self, input: dict, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module) -> dict:
+    def discriminator_train_step(self, real_samples: torch.FloatTensor, batch_size: int, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module) -> dict:
         '''
         Each training step of the discriminator.
         Parameters:
-            input: Input mini-batch from dataloader.
+            real_samples: The real samples. 
+            batch_size: The batch size. 
             discriminator_optimizer: The optimizer to use.
             discriminator_loss_fn: The loss function to use.
         Returns:
@@ -287,42 +288,49 @@ class VanillaGAN(nn.Module):
         # Zero the gradients
         discriminator_optimizer.zero_grad()
 
-        # Get real samples
-        real_samples = input['real']['images'] 
-        # Adversarial ground truths
-        valid = input['validity']['real']
         # Forward pass to get validity scores of real and fake samples
-        real_output = self.discriminator(real_samples)
+        generated_labels = self.discriminator(real_samples)
         # Compute loss: discriminator's ability to classify real from generated samples
-        real_loss = discriminator_loss_fn(real_output, valid)
+        valid_labels = self.get_validity_labels(batch_size=batch_size, type='real')
+
+        # Compute real loss
+        real_loss = discriminator_loss_fn(generated_labels, valid_labels)
         running_real_loss = real_loss.item()        
 
         # Sample noise
-        z = input['noise']['images']
-        fake = input['validity']['fake']
+        noise_tensor = self.sample_noise(batch_size=batch_size)
+        
         # Forward pass through generator to get fake samples
-        fake_samples = self.generator(z)
+        fake_samples = self.generator(noise_tensor)
+
         # Get the validity scores of the fake samples 
         fake_output = self.discriminator(fake_samples.detach())
+
+        # Get fake labels
+        fake_labels = self.get_validity_labels(batch_size=batch_size, type='fake')
+
         # Compute loss: discriminator's ability to classify real from generated samples
-        fake_loss = discriminator_loss_fn(fake_output, fake)
+        fake_loss = discriminator_loss_fn(fake_output, fake_labels)
         running_fake_loss = fake_loss.item()
 
         d_loss = (real_loss + fake_loss) / 2
         d_loss.backward()
+        
         # Update the parameters of the discriminator
         discriminator_optimizer.step()
+
         # Update the running loss
         running_loss = d_loss.item()
 
         return {'total': running_loss, 'real':running_real_loss, 'fake':running_fake_loss}
     
-    def discriminator_train_loop(self, input: dict, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module, k: int=1) -> dict:
+    def discriminator_train_loop(self, real_samples: torch.FloatTensor, batch_size: int, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module, k: int=1) -> dict:
         '''
         Training loop of the discriminator.
         Parameters:
             k: The number of training steps to perform.
-            input: Input mini-batch from dataloader.
+            real_samples: The real samples. 
+            batch_size: The batch size. 
             discriminator_optimizer: The optimizer to use.
             discriminator_loss_fn: The loss function to use.
         Returns:
@@ -339,7 +347,7 @@ class VanillaGAN(nn.Module):
         # For each training step of the discriminator
         for _ in range(k):
             # Perform a training step
-            loss = self.discriminator_train_step(input=input, discriminator_optimizer=discriminator_optimizer, discriminator_loss_fn=discriminator_loss_fn)
+            loss = self.discriminator_train_step(batch_size=batch_size, real_samples=real_samples, discriminator_optimizer=discriminator_optimizer, discriminator_loss_fn=discriminator_loss_fn)
             running_loss += loss['total']
             running_real_loss += loss['real']
             running_fake_loss += loss['fake']
@@ -349,11 +357,11 @@ class VanillaGAN(nn.Module):
         
         return {'total': running_loss, 'real':running_real_loss, 'fake':running_fake_loss}
     
-    def generator_train_step(self, input: dict, generator_optimizer: torch.optim, generator_loss_fn: torch.nn.Module) -> float:
+    def generator_train_step(self, batch_size: int, generator_optimizer: torch.optim, generator_loss_fn: torch.nn.Module) -> float:
         '''
         Each training step of the generator.
-        Parameters:
-            input: Input mini-batch from dataloader.
+        Parameters: 
+            batch_size: The batch size.
             generator_optimizer: The optimizer to use.
             generator_loss_fn: The loss function to use.
         Returns:
@@ -368,20 +376,20 @@ class VanillaGAN(nn.Module):
         # Zero the gradients
         generator_optimizer.zero_grad()
 
-        # Adversarial ground truth
-        valid = input['validity']['real']
-
         # Sample noise
-        z = input['noise']['images']
+        noise_tensor = self.sample_noise(batch_size=batch_size)
 
         # Forward pass to get fake samples
-        fake_samples = self.generator(z)
+        fake_samples = self.generator(noise_tensor)
 
         # Forward pass to get validity scores
         fake_output = self.discriminator(fake_samples.detach())
 
+        # Get labels for valid samples
+        valid_labels = self.get_validity_labels(batch_size=batch_size, type='real')
+
         # Loss measures generator's ability to fool the discriminator
-        g_loss = generator_loss_fn(fake_output, valid)
+        g_loss = generator_loss_fn(fake_output, valid_labels)
 
         # Backward pass
         g_loss.backward()
@@ -394,12 +402,12 @@ class VanillaGAN(nn.Module):
 
         return running_loss
     
-    def generator_train_loop(self, input: dict, generator_optimizer: torch.optim, generator_loss_fn: torch.nn.Module, l: int=1) -> float:
+    def generator_train_loop(self, batch_size: int, generator_optimizer: torch.optim, generator_loss_fn: torch.nn.Module, l: int=1) -> float:
         '''
         Training loop of the generator.
         Parameters:
-            k: The number of training steps to perform.
-            input: Input mini-batch from dataloader.
+            batch_size: The batch size.
+            l: The number of training steps to perform.
             generator_optimizer: The optimizer to use.
             generator_loss_fn: The loss function to use.
         Returns:
@@ -411,12 +419,12 @@ class VanillaGAN(nn.Module):
         # For each training step of the generator
         for _ in range(l):
             # Perform a training step
-            running_loss += self.generator_train_step(input=input, generator_optimizer=generator_optimizer, generator_loss_fn=generator_loss_fn)
+            running_loss += self.generator_train_step(batch_size=batch_size, generator_optimizer=generator_optimizer, generator_loss_fn=generator_loss_fn)
         running_loss /= l
         
         return running_loss
 
-    def train(self, dataloader, batch_size: int, generator_strategy: dict, discriminator_strategy: dict, epochs: int, starting_epoch :int, sample_interval: int, sample_save_path: str, model_save_path: str, log_path: str, experiment_number: int) -> None:
+    def train(self, dataloader, generator_strategy: dict, discriminator_strategy: dict, epochs: int, starting_epoch :int, sample_interval: int, sample_save_path: str, model_save_path: str, log_path: str, experiment_number: int) -> None:
         '''
         Training loop for the GAN.
         Parameters:
@@ -451,32 +459,15 @@ class VanillaGAN(nn.Module):
                 for imgs, _ in pbar:
                     # Move data to device and configure input
                     real_samples = Variable(imgs.type(torch.FloatTensor)).to(self.device)
+                    
                     # Recompute batch size for current mini batch
                     batch_size = real_samples.size(0)
 
-                    input = {
-                        'real': {
-                            'images' : real_samples, 
-                            'labels' : None
-                        }, 
-                        'noise': {
-                            'images' : self.sample_noise(batch_size=batch_size),  
-                            'labels' : None
-                        }, 
-                        'validity' : {
-                            'real' : self.get_validity_labels(batch_size=batch_size, type='real'), 
-                            'fake' : self.get_validity_labels(batch_size=batch_size, type='fake')
-                        }
-                    }
-
                     # Train the discriminator
-                    discriminator_loss = self.discriminator_train_loop(k=discriminator_strategy['epochs'], input=input, discriminator_optimizer=discriminator_strategy['optimizer'], discriminator_loss_fn=discriminator_strategy['criterion'])
-
-                    # Provide different noise to the generator
-                    input['noise']['images'] = self.sample_noise(batch_size=batch_size)
+                    discriminator_loss = self.discriminator_train_loop(k=discriminator_strategy['epochs'], real_samples=real_samples, batch_size=batch_size, discriminator_optimizer=discriminator_strategy['optimizer'], discriminator_loss_fn=discriminator_strategy['criterion'])
                     
                     # Train the generator
-                    generator_loss = self.generator_train_loop(l=generator_strategy['epochs'], input=input, generator_optimizer=generator_strategy['optimizer'], generator_loss_fn=generator_strategy['criterion'])
+                    generator_loss = self.generator_train_loop(l=generator_strategy['epochs'], batch_size=batch_size, generator_optimizer=generator_strategy['optimizer'], generator_loss_fn=generator_strategy['criterion'])
 
                     # Update the progress bar
                     pbar.set_postfix(Losses=f"g_loss: {generator_loss:.4f} - d_loss: {discriminator_loss['total']:.4f}")
@@ -529,8 +520,12 @@ class VanillaGAN(nn.Module):
         Returns:
             The sampled noise.
         '''
-        # Sample noise
-        z = Variable(torch.FloatTensor(np.random.normal(0, 1, (batch_size, self.z_dim)))).to(self.device)
+        # Sample noise from a normal distribution
+        # z = Variable(torch.FloatTensor(np.random.normal(0, 1, (batch_size, self.z_dim)))).to(self.device)
+
+        # Sample noise from a nultivariate distribution
+        z = Variable(torch.FloatTensor(np.random.multivariate_normal([0]*self.z_dim, np.eye(self.z_dim), batch_size)).to(self.device))
+
         return z
 
     def save_batch(self, save_path: str, epoch: int, batch_size: int, loss: int, writer, n_images: int=4) -> None:
