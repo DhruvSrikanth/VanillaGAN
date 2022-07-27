@@ -2,7 +2,7 @@ config = {
     'device' : {
         'home directory' : './',
         'initial seed': 1, 
-        'device type': 'mps', 
+        'device type': 'cpu', 
         
         }, 
     'data' : {
