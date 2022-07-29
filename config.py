@@ -6,7 +6,7 @@ config = {
         
         }, 
     'data' : {
-        'batch size': 128, 
+        'batch size': 32,
         'num workers': 8, 
         'image shape': (1, 28, 28),
         'train samples': 60000, 
