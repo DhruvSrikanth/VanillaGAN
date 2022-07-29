@@ -19,8 +19,8 @@ config = {
         'discriminator blocks' : 3, 
     }, 
     'hyperparameters' : {
-        'latent dimension': 64,
-        'learning rate': 0.00005, 
+        'latent dimension': 100,
+        'learning rate': 0.0002, 
         'beta1': 0.5,
         'beta2': 0.999,
         'epochs': 200, 
