@@ -2,7 +2,7 @@
 
 Simulate experiments with a Vanilla GAN architecture package.
 
-<p align="center">
+<p align="left">
     <a href="https://www.python.org/">
     <img src="https://img.shields.io/badge/Python-3.9.6-ff69b4.svg" /></a>
     <a href= "https://pytorch.org/">
