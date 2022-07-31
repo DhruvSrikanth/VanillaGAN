@@ -156,7 +156,7 @@ class VanillaGAN(object):
         # Update discriminator's weights
         discriminator_optimizer.step()
 
-        return {'total': real_loss.item(), 'real': fake_loss.item(), 'fake': d_loss.item()}
+        return {'total': d_loss.item(), 'real': fake_loss.item(), 'fake': real_loss.item()}
     
     def discriminator_train_loop(self, real_samples: torch.FloatTensor, batch_size: int, discriminator_optimizer: torch.optim, discriminator_loss_fn: torch.nn.Module, k: int=1) -> dict:
         '''

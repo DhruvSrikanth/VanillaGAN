@@ -42,7 +42,7 @@ def train_from_checkpoint_example() -> None:
     experiments.train(verbose=False, checkpoint=checkpoint)
     
 if __name__ == '__main__':
-    example = 1 # 1 for train from scratch, 2 for train from checkpoint
+    example = 2 # 1 for train from scratch, 2 for train from checkpoint
     if example == 1:
         train_from_scratch_example()
     elif example == 2:
