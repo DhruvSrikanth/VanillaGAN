@@ -1,13 +1,15 @@
 # Vanilla GAN Experiments Package
 
-Simulate experiments with a Vanilla GAN architecture package.
-
 <p align="left">
     <a href="https://www.python.org/">
     <img src="https://img.shields.io/badge/Python-3.9.6-ff69b4.svg" /></a>
     <a href= "https://pytorch.org/">
     <img src="https://img.shields.io/badge/PyTorch-1.13-2BAF2B.svg" /></a>
 </p>
+
+Simulate experiments with a Vanilla GAN architecture package.
+
+
 
 ## Setting up the Vanilla GAN Experiments package
 
